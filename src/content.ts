@@ -8,6 +8,7 @@ import {
 import {
   CHANNEL,
   MAX_RECORDS,
+  QUALITY_TTL,
   ACTIVE,
   errorText,
   keyOf,
@@ -25,6 +26,9 @@ import { audioQuality, videoQuality } from "./quality";
 import { placeVideoUi, videoPlacement } from "./placement";
 
 interface Player {
+  priority: number;
+  needsLayout: boolean;
+  rendered?: string;
   host: HTMLElement;
   button: HTMLButtonElement;
   info: HTMLElement;
@@ -105,12 +109,23 @@ function schedule() {
   setTimeout(() => {
     scheduled = false;
     scan();
-  }, 100);
+  }, 16);
 }
 const tooltip = "下载视频或音频";
 function render(p: Player) {
   const job = p.job,
     active = job && ACTIVE.has(job.state);
+  const signature = JSON.stringify([
+    p.busy,
+    job?.state,
+    job?.mode,
+    job?.candidate?.label,
+    job?.error,
+    job?.warnings,
+    p.quality,
+  ]);
+  if (signature === p.rendered) return;
+  p.rendered = signature;
   p.button.replaceChildren(
     createElement(p.busy || active ? LoaderCircle : Download),
   );
@@ -118,17 +133,23 @@ function render(p: Player) {
   p.button.setAttribute("aria-label", tooltip);
   const q = p.quality;
   p.videoLine.textContent = q
-    ? `${q.warnings.length ? "可用画质" : "最高画质"}：${q.error ? "暂不可用" : videoQuality(q.video)}`
+    ? `${q.pending ? "已知画质" : q.warnings.length ? "可用画质" : "最高画质"}：${q.error ? "暂不可用" : videoQuality(q.video)}${q.pending ? " · 确认中" : ""}`
     : "最高画质：检测中…";
   p.audioLine.textContent = q
-    ? `${q.warnings.length ? "可用音质" : "最高音质"}：${q.error ? "暂不可用" : audioQuality(q.audio)}`
+    ? `${q.pending ? "已知音质" : q.warnings.length ? "可用音质" : "最高音质"}：${q.error ? "暂不可用" : q.pending && !q.audio ? "检测中…" : audioQuality(q.audio)}${q.pending && q.audio ? " · 确认中" : ""}`
     : "最高音质：检测中…";
   p.info.title = q?.error ?? q?.warnings.join("\n") ?? "";
   p.info.setAttribute(
     "aria-label",
     `${p.videoLine.textContent}；${p.audioLine.textContent}`,
   );
-  p.info.dataset.state = q ? (q.error ? "error" : "ready") : "loading";
+  p.info.dataset.state = q
+    ? q.error
+      ? "error"
+      : q.pending
+        ? "partial"
+        : "ready"
+    : "loading";
   const state: Record<string, string> = {
     queued: "排队中",
     analyzing: "检查中",
@@ -163,20 +184,35 @@ function requestProbe(p: Player) {
     p.probeKey === key &&
     (p.probePending ||
       (p.quality &&
-        Date.now() - p.quality.checkedAt < (p.quality.error ? 30000 : 120000)))
+        !p.quality.pending &&
+        Date.now() - p.quality.checkedAt <
+          (p.quality.error ? 30000 : QUALITY_TTL)))
   )
     return;
-  if (p.probeTime && Date.now() - p.probeTime < 1500) return;
   stopProbe(p);
   p.probeKey = key;
   p.probePending = true;
   p.probeTime = Date.now();
-  void send({ type: "PROBE", record: p.record })
+  if (!p.quality) {
+    const variant = p.record.variants
+      .filter((v) => v.width && v.height)
+      .sort((a, b) => b.width! * b.height! - a.width! * a.height!)[0];
+    if (variant) {
+      p.quality = {
+        video: { width: variant.width!, height: variant.height! },
+        warnings: [],
+        checkedAt: Date.now(),
+        pending: true,
+      };
+      render(p);
+    }
+  }
+  void send({ type: "PROBE", record: p.record, priority: p.priority })
     .then((response) => {
       if (p.probeKey !== key) return;
       if (response?.quality) {
         p.quality = response.quality;
-        p.probePending = false;
+        p.probePending = !!p.quality?.pending;
         render(p);
       } else if (!response?.ok) {
         p.probePending = false;
@@ -231,11 +267,16 @@ const intersection = new IntersectionObserver(
         p = players.get(video);
       if (!p) continue;
       p.visible = entry.isIntersecting;
+      p.priority =
+        entry.boundingClientRect.bottom > 0 &&
+        entry.boundingClientRect.top < innerHeight
+          ? 0
+          : 1;
       if (p.visible) {
         requestProbe(p);
         if (!p.record) {
           unresolved.add(video);
-          setTimeout(() => void resolveVisible(), 900);
+          setTimeout(() => void resolveVisible(), 150);
         }
       } else {
         stopProbe(p);
@@ -244,6 +285,23 @@ const intersection = new IntersectionObserver(
     }
   },
   { rootMargin: "180px 0px", threshold: 0 },
+);
+const viewport = new IntersectionObserver(
+  (entries) => {
+    for (const entry of entries) {
+      const p = players.get(entry.target as HTMLVideoElement);
+      if (!p) continue;
+      const priority = entry.isIntersecting ? 0 : 1;
+      if (p.priority !== priority) {
+        p.priority = priority;
+        if (p.probePending && p.record && entry.isIntersecting)
+          void send({ type: "PROBE", record: p.record, priority }).catch(
+            () => {},
+          );
+      }
+    }
+  },
+  { threshold: 0 },
 );
 async function resolve(video: HTMLVideoElement): Promise<MediaRecord> {
   scanScripts(document);
@@ -360,7 +418,7 @@ function openMenu(video: HTMLVideoElement) {
     buttons[1]!.disabled =
       p.busy ||
       !!(p.job?.mode === "audio" && ACTIVE.has(p.job.state)) ||
-      !!(q && !q.error && !q.warnings.length && !q.audio);
+      !!(q && !q.pending && !q.error && !q.warnings.length && !q.audio);
   };
   shadow.append(style, list);
   document.documentElement.append(host);
@@ -372,7 +430,9 @@ function openMenu(video: HTMLVideoElement) {
   host.style.left = `${Math.max(10, Math.min(innerWidth - width - 10, box.right - width))}px`;
   host.style.top = `${Math.max(10, box.bottom + height + 8 < innerHeight ? box.bottom + 6 : box.top - height - 6)}px`;
   p.button.setAttribute("aria-expanded", "true");
-  (buttons.find((b) => !b.disabled) ?? buttons[0])?.focus();
+  (buttons.find((b) => !b.disabled) ?? buttons[0])?.focus({
+    preventScroll: true,
+  });
   requestProbe(p);
   list.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
@@ -415,9 +475,16 @@ document.addEventListener(
 window.addEventListener("scroll", () => closeMenu(), true);
 window.addEventListener("resize", () => {
   closeMenu();
+  for (const p of players.values()) p.needsLayout = true;
   schedule();
 });
-const layoutObserver = new ResizeObserver(() => schedule());
+const layoutObserver = new ResizeObserver((entries) => {
+  for (const e of entries) {
+    const p = players.get(e.target as HTMLVideoElement);
+    if (p) p.needsLayout = true;
+  }
+  schedule();
+});
 const pendingLayout = new Set<HTMLVideoElement>();
 function attach(video: HTMLVideoElement) {
   layoutObserver.observe(video);
@@ -453,6 +520,8 @@ function attach(video: HTMLVideoElement) {
   infoShadow.append(infoStyle, videoLine, audioLine, status);
   placeVideoUi(video, host, info);
   const p: Player = {
+    priority: 0,
+    needsLayout: false,
     host,
     button,
     info,
@@ -473,12 +542,14 @@ function attach(video: HTMLVideoElement) {
   });
   render(p);
   intersection.observe(video);
+  viewport.observe(video);
 }
 function detach(video: HTMLVideoElement, p: Player) {
   if (menu?.owner === video) closeMenu();
   stopProbe(p);
   unresolved.delete(video);
   intersection.unobserve(video);
+  viewport.unobserve(video);
   layoutObserver.unobserve(video);
   p.host.remove();
   p.info.remove();
@@ -495,9 +566,12 @@ function scan() {
       detach(video, p);
       continue;
     }
-    const placed = placeVideoUi(video, p.host, p.info);
-    p.info.style.display = placed ? "block" : "none";
-    p.host.style.display = placed ? "block" : "none";
+    if (p.needsLayout || !p.host.isConnected || !p.info.isConnected) {
+      const placed = placeVideoUi(video, p.host, p.info);
+      p.info.style.display = placed ? "block" : "none";
+      p.host.style.display = placed ? "block" : "none";
+      p.needsLayout = false;
+    }
     const fingerprint = video.poster || video.currentSrc;
     if (fingerprint !== p.fingerprint) {
       stopProbe(p);
@@ -540,6 +614,18 @@ const observer = new MutationObserver((changes) => {
     )
       continue;
     if (change.type === "attributes") {
+      if (["style", "class"].includes(change.attributeName ?? "")) {
+        let affectsPlayer = false;
+        for (const [video, p] of players)
+          if (
+            change.target instanceof Element &&
+            change.target.contains(video)
+          ) {
+            p.needsLayout = true;
+            affectsPlayer = true;
+          }
+        if (!affectsPlayer) continue;
+      }
       relevant = true;
       continue;
     }
@@ -550,6 +636,9 @@ const observer = new MutationObserver((changes) => {
         relevant = true;
       }
     }
+    for (const [video, p] of players)
+      if (change.target instanceof Element && change.target.contains(video))
+        p.needsLayout = true;
     for (const node of change.removedNodes)
       if (node instanceof Element && !node.tagName.startsWith("XVD-"))
         relevant = true;
@@ -578,7 +667,7 @@ chrome.runtime.onMessage.addListener((m) => {
     for (const p of players.values())
       if (p.probeKey === m.key) {
         p.quality = m.quality;
-        p.probePending = false;
+        p.probePending = !!m.quality.pending;
         render(p);
       }
     return;

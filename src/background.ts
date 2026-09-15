@@ -16,13 +16,15 @@ import {
   validateRecord,
 } from "./security";
 import { extractMedia } from "./extract";
+import { SessionCache } from "./session-cache";
 
 const jobs = new Map<string, Job>();
-const qualityCache = new Map<string, QualitySummary>();
+const cache = new SessionCache();
 const watchers = new Map<string, Map<number, number>>();
 let creating: Promise<void> | undefined;
 let serial: Promise<unknown> = Promise.resolve();
 const ready = (async () => {
+  await cache.restore();
   await chrome.storage.local.setAccessLevel({
     accessLevel: "TRUSTED_CONTEXTS",
   });
@@ -155,10 +157,8 @@ async function handle(
       return { ok: true };
     }
     if (m.type === "QUALITY_RESULT") {
-      qualityCache.delete(m.key);
-      qualityCache.set(m.key, m.quality);
-      while (qualityCache.size > 200)
-        qualityCache.delete(qualityCache.keys().next().value!);
+      // Cache storage failure must not suppress a completed inspection result.
+      await cache.put(m.key, m.quality, m.plan).catch(() => {});
       const tabIds = new Set<number>(
         (Array.isArray(m.tabIds) ? m.tabIds : []).filter(Number.isInteger),
       );
@@ -172,7 +172,7 @@ async function handle(
             quality: m.quality,
           })
           .catch(() => {});
-      watchers.delete(m.key);
+      if (!m.quality.pending) watchers.delete(m.key);
       return { ok: true };
     }
     const job = jobs.get(m.id);
@@ -252,12 +252,8 @@ async function handle(
     const record = validateRecord(m.record);
     if (!record) return { ok: false, error: "媒体元数据无效" };
     const key = planKey(record),
-      cached = qualityCache.get(key);
-    if (
-      cached &&
-      Date.now() - cached.checkedAt < (cached.error ? 30000 : 120000)
-    )
-      return { ok: true, quality: cached, key };
+      cached = cache.getQuality(key);
+    if (cached) return { ok: true, quality: cached, key };
     if (watchers.size >= 100 && !watchers.has(key))
       return { ok: false, error: "正在检查其他视频" };
     const tabs = watchers.get(key) ?? new Map<number, number>();
@@ -269,6 +265,7 @@ async function handle(
       record,
       key,
       tabId: sender.tab!.id,
+      priority: m.priority === 1 ? 1 : 0,
     });
     if (!reply?.ok) watchers.delete(key);
     return { ...reply, key };
@@ -355,7 +352,11 @@ async function handle(
     jobs.set(job.id, job);
     await persist();
     await ensureOffscreen();
-    await offscreen({ type: "ENQUEUE", job });
+    await offscreen({
+      type: "ENQUEUE",
+      job,
+      plan: cache.getPlan(planKey(record)),
+    });
     return { ok: true, job };
   }
   if (m.type === "CANCEL" || m.type === "RETRY") {
@@ -390,14 +391,23 @@ async function handle(
           : [],
     });
     await ensureOffscreen();
-    await offscreen({ type: "ENQUEUE", job });
+    await offscreen({
+      type: "ENQUEUE",
+      job,
+      plan: cache.getPlan(planKey(job.record)),
+    });
     return { ok: true, job };
   }
   return { ok: false, error: "未知操作" };
 }
 chrome.runtime.onMessage.addListener((m, sender, reply) => {
   if (m?.target === "offscreen") return;
-  void enqueue(() => handle(m, sender))
+  // A 15-second external fallback must not hold the global job mutation queue.
+  const operation =
+    m?.type === "SYNDICATION"
+      ? ready.then(() => handle(m, sender))
+      : enqueue(() => handle(m, sender));
+  void operation
     .then(reply)
     .catch((e) => reply({ ok: false, error: errorText(e) }));
   return true;

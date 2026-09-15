@@ -1,6 +1,10 @@
 {
   "name": "x-video-downloader",
-  "version": "1.1.1",
+  "version": "1.2.0",
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,6 +15,7 @@
     "test:layout": "node scripts/layout-test.mjs",
     "test:live": "node scripts/live.mjs",
     "test:source": "node scripts/source-check.mjs",
+    "test:performance": "node scripts/performance.mjs",
     "test:live-hls": "node scripts/live-hls.mjs",
     "package": "pnpm build && node scripts/package.mjs"
   },

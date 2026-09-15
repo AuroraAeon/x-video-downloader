@@ -8,6 +8,7 @@ import {
 import { ProbeQueue } from "./probes";
 
 interface Task {
+  initialPlan?: MediaPlan;
   job: Job;
   worker?: Worker;
   cancelled: boolean;
@@ -24,10 +25,10 @@ const send = (message: unknown) =>
   chrome.runtime.sendMessage({ target: "background", ...(message as object) });
 const probeTabs = new Map<string, Set<number>>();
 const probes = new ProbeQueue(
-  (key, quality) => {
+  (key, quality, plan) => {
     const tabIds = [...(probeTabs.get(key) ?? [])];
-    probeTabs.delete(key);
-    return send({ type: "QUALITY_RESULT", key, quality, tabIds });
+    if (!quality.pending) probeTabs.delete(key);
+    return send({ type: "QUALITY_RESULT", key, quality, tabIds, plan });
   },
   scheduleIdle,
   () => running < 2,
@@ -130,6 +131,7 @@ async function run(task: Task) {
     await update(task, { state: "analyzing", progress: 0 });
     task.worker = new Worker("media-worker.js", { type: "module" });
     const plan =
+      task.initialPlan ??
       probes.get(task.job.record) ??
       (await probes.wait(task.job.record)) ??
       ((await rpc(task, {
@@ -254,7 +256,7 @@ chrome.runtime.onMessage.addListener((m, sender, reply) => {
     const tabs = probeTabs.get(m.key) ?? new Set<number>();
     tabs.add(m.tabId);
     probeTabs.set(m.key, tabs);
-    const ok = probes.add(m.record);
+    const ok = probes.add(m.record, m.priority);
     if (!ok) probeTabs.delete(m.key);
     reply({ ok });
     return;
@@ -274,6 +276,7 @@ chrome.runtime.onMessage.addListener((m, sender, reply) => {
     void initialized.then(() => {
       if (!tasks.has(m.job.id)) {
         const task: Task = { job: m.job, cancelled: false };
+        task.initialPlan = m.plan;
         tasks.set(m.job.id, task);
         pending.push(task);
         pump();

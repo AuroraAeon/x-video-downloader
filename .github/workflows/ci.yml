@@ -1,0 +1,35 @@
+name: Extension Checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pnpm test:e2e
+      - run: pnpm test:layout
+      - run: pnpm package
+      - run: pnpm exec node scripts/check-package.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-and-package
+          path: |
+            output/playwright/*report.json
+            release/*.zip
+            release/SHA256SUMS.txt

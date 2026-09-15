@@ -4,7 +4,11 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 const out = path.resolve("output/playwright");
 await mkdir(out, { recursive: true });
-const extension = path.resolve("dist");
+const extension = path.resolve(process.env.XVD_EXTENSION ?? "dist");
+const runLabel = process.env.XVD_RUN ?? downloadLabel();
+function downloadLabel() {
+  return process.env.XVD_MODE === "audio" ? "audio" : "video";
+}
 const downloadMode = process.env.XVD_MODE === "audio" ? "audio" : "video";
 const proxyServer = process.env.https_proxy ?? process.env.HTTPS_PROXY;
 const context = await chromium.launchPersistentContext("", {
@@ -25,6 +29,7 @@ const report = {
   errors: [],
   statuses: [],
   mode: downloadMode,
+  timings: {},
 };
 try {
   const worker =
@@ -42,14 +47,20 @@ try {
       console.log("Navigation:", r.status(), r.url());
     }
   });
+  const started = performance.now();
   await page.goto(report.url, {
     waitUntil: "domcontentloaded",
     timeout: 60000,
   });
+  report.timings.navigationMs = performance.now() - started;
   await page.waitForSelector("xvd-download", { timeout: 60000 });
+  report.timings.controlMs = performance.now() - started;
   await page.waitForSelector('xvd-quality[data-state="ready"]', {
     timeout: 120000,
   });
+  report.timings.qualityMs = performance.now() - started;
+  report.timings.inspectionMs =
+    report.timings.qualityMs - report.timings.controlMs;
   report.inline = await page
     .locator("xvd-quality")
     .first()
@@ -68,11 +79,12 @@ try {
   if (report.geometry.info.y < report.geometry.video.bottom - 2)
     throw Error("Quality strip overlaps the video");
   console.log("Inline quality:", report.inline);
-  await page.screenshot({ path: `${out}/live-${downloadMode}-before.png` });
+  await page.screenshot({ path: `${out}/live-${runLabel}-before.png` });
   const host = page.locator("xvd-download").first();
   const rect = await host.boundingBox();
   await page.mouse.click(rect.x + 14, rect.y + 14);
-  await page.screenshot({ path: `${out}/live-${downloadMode}-menu.png` });
+  await page.waitForSelector("xvd-menu", { timeout: 5000 });
+  await page.screenshot({ path: `${out}/live-${runLabel}-menu.png` });
   if (downloadMode === "audio") await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   const popup = await context.newPage();
@@ -108,8 +120,8 @@ try {
     await page.waitForTimeout(1000);
   }
   report.job = final;
-  await page.screenshot({ path: `${out}/live-${downloadMode}-after.png` });
-  await popup.screenshot({ path: `${out}/live-${downloadMode}-popup.png` });
+  await page.screenshot({ path: `${out}/live-${runLabel}-after.png` });
+  await popup.screenshot({ path: `${out}/live-${runLabel}-popup.png` });
   if (final?.state !== "complete")
     throw Error(`Live download failed: ${JSON.stringify(final)}`);
   const item = await popup.evaluate(
@@ -145,6 +157,7 @@ try {
     JSON.stringify(
       {
         result: "passed",
+        timings: report.timings,
         candidate: final.candidate,
         warnings: final.warnings,
         streams: report.probe.streams.map((s) => ({
@@ -165,7 +178,7 @@ try {
   throw e;
 } finally {
   await writeFile(
-    `${out}/live-${downloadMode}-report.json`,
+    `${out}/live-${runLabel}-report.json`,
     JSON.stringify(report, null, 2),
   );
   await context.close();

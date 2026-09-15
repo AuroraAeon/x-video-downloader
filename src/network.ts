@@ -12,7 +12,10 @@ export class DownloadError extends Error {
 export const sleep = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-export function createMediaFetch(parent: AbortSignal): typeof fetch {
+export function createMediaFetch(
+  parent: AbortSignal,
+  options: { attempts?: number; timeoutMs?: number } = {},
+): typeof fetch {
   return async (input, init) => {
     const url = mediaUrl(input instanceof Request ? input.url : String(input));
     if (!url)
@@ -20,7 +23,8 @@ export function createMediaFetch(parent: AbortSignal): typeof fetch {
     const headers = new Headers();
     const range = new Headers(init?.headers).get("range");
     if (range) headers.set("range", range);
-    for (let attempt = 0; attempt < 3; attempt++) {
+    const attempts = options.attempts ?? 3;
+    for (let attempt = 0; attempt < attempts; attempt++) {
       parent.throwIfAborted();
       const timeout = new AbortController();
       let timer: ReturnType<typeof setTimeout>;
@@ -28,7 +32,7 @@ export function createMediaFetch(parent: AbortSignal): typeof fetch {
         clearTimeout(timer);
         timer = setTimeout(
           () => timeout.abort(new DownloadError("TIMEOUT", "媒体请求超时")),
-          20000,
+          options.timeoutMs ?? 20000,
         );
       };
       refresh();
@@ -119,7 +123,7 @@ export function createMediaFetch(parent: AbortSignal): typeof fetch {
             !["TIMEOUT", "408", "500", "502", "503", "504"].includes(
               err.code,
             )) ||
-          attempt === 2
+          attempt === attempts - 1
         )
           throw e;
         await sleep([600, 1800][attempt]!);

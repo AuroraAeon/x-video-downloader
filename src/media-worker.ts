@@ -12,7 +12,9 @@ import {
   type InputAudioTrack,
 } from "mediabunny";
 import { createMediaFetch, DownloadError } from "./network";
-import { compareCandidates, compareAudio } from "./quality";
+import { compareCandidates, compareAudio, summarize } from "./quality";
+import { ProbeSources } from "./probe-source";
+import { mapLimit, Limiter } from "./concurrency";
 import {
   errorText,
   type MediaRecord,
@@ -25,20 +27,24 @@ import {
 
 const control = new AbortController();
 const inputs = new Set<Input>();
+const probeFactories = new WeakMap<Input, ProbeSources>();
 let conversion: Conversion | undefined;
-function open(v: Variant): Input {
+function open(v: Variant, probe?: ProbeSources): Input {
   const input = new Input({
-    source: new UrlSource(v.url, {
-      fetchFn: createMediaFetch(control.signal),
-      maxCacheSize: 8 * 1024 * 1024,
-      parallelism: 2,
-      getRetryDelay: () => null,
-      handleUnhandledError: () => {},
-    }),
+    source: probe
+      ? probe.source(v.url)
+      : new UrlSource(v.url, {
+          fetchFn: createMediaFetch(control.signal),
+          maxCacheSize: 8 * 1024 * 1024,
+          parallelism: 2,
+          getRetryDelay: () => null,
+          handleUnhandledError: () => {},
+        }),
     formats: v.kind === "hls" ? HLS_FORMATS : [MP4],
     formatOptions: { hls: { offsetTimestampsByDateTime: false } },
   });
   inputs.add(input);
+  if (probe) probeFactories.set(input, probe);
   return input;
 }
 async function describeAudio(
@@ -77,6 +83,7 @@ async function describeAudio(
 function close(input: Input) {
   input.dispose();
   inputs.delete(input);
+  probeFactories.get(input)?.dispose();
 }
 async function describe(
   video: InputVideoTrack,
@@ -126,38 +133,48 @@ async function describe(
     label: `${width}x${height}`,
   };
 }
-async function plan(record: MediaRecord): Promise<MediaPlan> {
+async function plan(
+  record: MediaRecord,
+  requestId: string,
+): Promise<MediaPlan> {
+  const networkSlots = new Limiter(4);
   const candidates: Candidate[] = [],
     audioCandidates: Candidate[] = [],
     warnings: string[] =
       record.source === "syndication"
         ? ["公开嵌入接口可能缺少部分媒体版本"]
         : [];
-  for (const [i, v] of record.variants.entries()) {
+  await mapLimit(record.variants, 3, async (v, i) => {
     control.signal.throwIfAborted();
-    const input = open(v);
-    const deadline = setTimeout(() => input.dispose(), 20000);
+    const input = open(v, new ProbeSources(control.signal, networkSlots));
+    const deadline = setTimeout(() => input.dispose(), 12000);
     try {
       const tracks = await input.getVideoTracks();
-      for (const audio of (await input.getAudioTracks()).slice(0, 16)) {
-        try {
-          audioCandidates.push(await describeAudio(audio, v, String(i)));
-        } catch (e) {
-          if ((e as DownloadError).stop) throw e;
-          warnings.push(`音轨无法检查：${errorText(e)}`);
-        }
-      }
-      for (const video of tracks.slice(0, 12)) {
-        try {
-          if (v.kind === "hls" && (await video.hasOnlyKeyPackets())) continue;
-          candidates.push(await describe(video, v, String(i)));
-        } catch (e) {
-          if ((e as DownloadError).stop) throw e;
-          warnings.push(
-            `一个 ${v.kind.toUpperCase()} 版本无法解析：${errorText(e)}`,
-          );
-        }
-      }
+      await Promise.all([
+        mapLimit(
+          (await input.getAudioTracks()).slice(0, 16),
+          3,
+          async (audio) => {
+            try {
+              audioCandidates.push(await describeAudio(audio, v, String(i)));
+            } catch (e) {
+              if ((e as DownloadError).stop) throw e;
+              warnings.push(`音轨无法检查：${errorText(e)}`);
+            }
+          },
+        ),
+        mapLimit(tracks.slice(0, 12), 3, async (video) => {
+          try {
+            if (v.kind === "hls" && (await video.hasOnlyKeyPackets())) return;
+            candidates.push(await describe(video, v, String(i)));
+          } catch (e) {
+            if ((e as DownloadError).stop) throw e;
+            warnings.push(
+              `一个 ${v.kind.toUpperCase()} 版本无法解析：${errorText(e)}`,
+            );
+          }
+        }),
+      ]);
     } catch (e) {
       if ((e as DownloadError).stop) throw e;
       warnings.push(`${v.kind.toUpperCase()} 候选不可用：${errorText(e)}`);
@@ -165,8 +182,19 @@ async function plan(record: MediaRecord): Promise<MediaPlan> {
       clearTimeout(deadline);
       close(input);
     }
-    postMessage({ type: "activity" });
-  }
+    postMessage({
+      type: "partial",
+      requestId,
+      quality: {
+        ...summarize({
+          candidates: [...candidates].sort(compareCandidates),
+          audioCandidates: [...audioCandidates].sort(compareAudio),
+          warnings: [...warnings],
+        }),
+        pending: true,
+      },
+    });
+  });
   if (candidates.some((c) => c.audio)) {
     const silent = candidates.filter((c) => !c.audio);
     if (silent.length) {
@@ -316,7 +344,7 @@ onmessage = (event) => {
   }
   void (
     m.type === "plan"
-      ? plan(m.record)
+      ? plan(m.record, m.requestId)
       : render(m.jobId, m.candidate, m.record, m.mode)
   )
     .then((result) =>

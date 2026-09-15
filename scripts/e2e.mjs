@@ -230,6 +230,22 @@ try {
   results.push(
     "Revisiting visible media reuses quality results without another CDN probe",
   );
+  const cachedRequests = requestCount();
+  await popup.evaluate(async () => {
+    const contexts = await chrome.runtime.getContexts({
+      contextTypes: [chrome.runtime.ContextType.OFFSCREEN_DOCUMENT],
+    });
+    if (contexts.length) await chrome.offscreen.closeDocument();
+  });
+  const cacheCdp = await context.newCDPSession(popup);
+  await cacheCdp.send("ServiceWorker.enable");
+  await cacheCdp.send("ServiceWorker.stopAllWorkers");
+  await page.reload();
+  await page.waitForSelector('xvd-quality[data-state="ready"]');
+  assert.equal(requestCount(), cachedRequests);
+  results.push(
+    "Quality cache survives both offscreen closure and service worker termination with no new media requests",
+  );
   const blocker = await page.locator("xvd-download").boundingBox();
   await page.mouse.click(blocker.x + 14, blocker.y + 14);
   await page.mouse.click(20, 20);

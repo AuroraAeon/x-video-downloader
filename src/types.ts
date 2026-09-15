@@ -42,6 +42,7 @@ export interface MediaPlan {
   warnings: string[];
 }
 export interface QualitySummary {
+  pending?: boolean;
   video?: Pick<Candidate, "width" | "height" | "fps">;
   audio?: Pick<
     Candidate,
@@ -87,6 +88,8 @@ export const ACTIVE = new Set<JobState>([
 export const CHANNEL = "x-video-downloader/v1";
 export const MAX_JSON = 4 * 1024 * 1024;
 export const MAX_RECORDS = 500;
+export const QUALITY_TTL = 15 * 60 * 1000;
+export const PLAN_TTL = 2 * 60 * 1000;
 export const keyOf = (r: MediaRecord) => `${r.sourceTweetId}:${r.mediaId}`;
 export const jobKey = (r: MediaRecord, mode: DownloadMode) =>
   `${keyOf(r)}:${mode}`;
