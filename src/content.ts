@@ -22,6 +22,7 @@ import { mergeRecord } from "./extract";
 import { SsrDecoder } from "./ssr";
 import { identify, postIds } from "./dom";
 import { audioQuality, videoQuality } from "./quality";
+import { placeVideoUi, videoPlacement } from "./placement";
 
 interface Player {
   host: HTMLElement;
@@ -412,28 +413,20 @@ document.addEventListener(
   true,
 );
 window.addEventListener("scroll", () => closeMenu(), true);
-window.addEventListener("resize", () => closeMenu());
-function frameFor(video: HTMLVideoElement): HTMLElement {
-  let frame = video.parentElement!,
-    next = frame.parentElement;
-  const box = video.getBoundingClientRect();
-  for (let i = 0; next && i < 5; i++, next = next.parentElement) {
-    const r = next.getBoundingClientRect();
-    if (
-      next.tagName === "ARTICLE" ||
-      next.querySelectorAll("video").length !== 1 ||
-      Math.abs(r.width - box.width) > 5 ||
-      Math.abs(r.height - box.height) > 5
-    )
-      break;
-    frame = next;
-  }
-  return frame;
-}
+window.addEventListener("resize", () => {
+  closeMenu();
+  schedule();
+});
+const layoutObserver = new ResizeObserver(() => schedule());
+const pendingLayout = new Set<HTMLVideoElement>();
 function attach(video: HTMLVideoElement) {
-  if (!video.parentElement) return;
-  const frame = frameFor(video),
-    host = document.createElement("xvd-download"),
+  layoutObserver.observe(video);
+  if (!videoPlacement(video)) {
+    pendingLayout.add(video);
+    return;
+  }
+  pendingLayout.delete(video);
+  const host = document.createElement("xvd-download"),
     info = document.createElement("xvd-quality");
   host.style.cssText =
     "position:absolute;top:6px;right:6px;z-index:10;display:block;width:28px;height:28px;pointer-events:auto;";
@@ -458,10 +451,7 @@ function attach(video: HTMLVideoElement) {
   status.hidden = true;
   status.setAttribute("role", "status");
   infoShadow.append(infoStyle, videoLine, audioLine, status);
-  if (getComputedStyle(frame).position === "static")
-    frame.style.position = "relative";
-  frame.append(host);
-  frame.after(info);
+  placeVideoUi(video, host, info);
   const p: Player = {
     host,
     button,
@@ -489,16 +479,25 @@ function detach(video: HTMLVideoElement, p: Player) {
   stopProbe(p);
   unresolved.delete(video);
   intersection.unobserve(video);
+  layoutObserver.unobserve(video);
   p.host.remove();
   p.info.remove();
   players.delete(video);
 }
 function scan() {
+  for (const video of pendingLayout)
+    if (!video.isConnected) {
+      layoutObserver.unobserve(video);
+      pendingLayout.delete(video);
+    }
   for (const [video, p] of players) {
-    if (!video.isConnected || !p.host.isConnected || !p.info.isConnected) {
+    if (!video.isConnected) {
       detach(video, p);
       continue;
     }
+    const placed = placeVideoUi(video, p.host, p.info);
+    p.info.style.display = placed ? "block" : "none";
+    p.host.style.display = placed ? "block" : "none";
     const fingerprint = video.poster || video.currentSrc;
     if (fingerprint !== p.fingerprint) {
       stopProbe(p);
@@ -528,8 +527,8 @@ function scan() {
         postUrl(location.href))
     ) {
       attach(video);
-      const p = players.get(video)!;
-      p.record = identify(video, [...records.values()]);
+      const p = players.get(video);
+      if (p) p.record = identify(video, [...records.values()]);
     }
 }
 const observer = new MutationObserver((changes) => {
@@ -561,7 +560,7 @@ observer.observe(document, {
   childList: true,
   subtree: true,
   attributes: true,
-  attributeFilter: ["src", "poster", "href"],
+  attributeFilter: ["src", "poster", "href", "class", "style"],
 });
 scanScripts(document);
 schedule();

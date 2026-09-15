@@ -1,6 +1,6 @@
 # X Video Downloader
 
-独立 Chrome Manifest V3 扩展。在 X 帖子视频右上角提供小型毛玻璃下载按钮，点击可选择最高画质视频（MP4）或最高音质音频（M4A）。视频下方自动显示分辨率、帧率和音频编码、码率、采样率与声道数，无需先下载。当前版本 **1.1.0**。
+独立 Chrome Manifest V3 扩展。在 X 帖子视频右上角提供小型毛玻璃下载按钮，点击可选择最高画质视频（MP4）或最高音质音频（M4A）。视频下方自动显示分辨率、帧率和音频编码、码率、采样率与声道数，无需先下载。当前版本 **1.1.1**。
 
 [下载最新安装包](https://github.com/AuroraAeon/x-video-downloader/releases/latest) · [更新记录](CHANGELOG.md)
 
@@ -9,7 +9,7 @@
 ## 安装
 
 1. 打开 Chrome 的 `chrome://extensions`，开启右上角的「开发者模式」。
-2. 点击「加载已解压的扩展程序」，选择本项目的 `dist` 目录。也可以解压 `release/x-video-downloader-1.1.0.zip`，选择解压后包含 `manifest.json` 的目录。
+2. 点击「加载已解压的扩展程序」，选择本项目的 `dist` 目录。也可以解压 `release/x-video-downloader-1.1.1.zip`，选择解压后包含 `manifest.json` 的目录。
 3. 刷新已打开的 X 页面。保持原有登录状态，点击视频右上角的下载图标，选择视频或音频。
 
 扩展安装目录需要保留。更新时替换构建目录，在扩展管理页点击刷新，再刷新 X 页面。无需重新登录，也不需要复制 Cookie。
@@ -18,7 +18,7 @@
 
 1. 等待当前下载完成。若已从本项目 `dist` 安装，新构建已在原位置；若从 ZIP 安装，将新包解压覆盖到**原先加载的同一个目录**。
 2. 打开 `chrome://extensions`，找到 X Video Downloader，点击卡片上的刷新图标。
-3. 确认扩展版本变为 **1.1.0**，刷新所有已打开的 X 页面。
+3. 确认扩展版本变为 **1.1.1**，刷新所有已打开的 X 页面。
 
 无需移除后重装；保留同一目录可以保留扩展 ID 和本地任务记录。已有 1.0.0 任务会作为视频任务读取。
 
@@ -64,6 +64,7 @@ pnpm test
 pnpm build
 pnpm exec playwright install chromium
 pnpm test:e2e
+pnpm test:layout
 pnpm test:source
 pnpm test:live
 pnpm test:live-hls

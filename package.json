@@ -1,6 +1,6 @@
 {
   "name": "x-video-downloader",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "node scripts/e2e.mjs",
+    "test:layout": "node scripts/layout-test.mjs",
     "test:live": "node scripts/live.mjs",
     "test:source": "node scripts/source-check.mjs",
     "test:live-hls": "node scripts/live-hls.mjs",
