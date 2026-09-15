@@ -1,0 +1,32 @@
+{
+  "name": "x-video-downloader",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "node scripts/e2e.mjs",
+    "test:live": "node scripts/live.mjs",
+    "test:source": "node scripts/source-check.mjs",
+    "test:live-hls": "node scripts/live-hls.mjs",
+    "package": "pnpm build && node scripts/package.mjs"
+  },
+  "dependencies": {
+    "acorn": "8.15.0",
+    "lucide": "0.468.0",
+    "mediabunny": "1.56.2"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.0.287",
+    "@types/node": "22.10.5",
+    "esbuild": "0.25.0",
+    "fflate": "0.8.2",
+    "playwright": "1.63.0",
+    "selfsigned": "2.4.1",
+    "sharp": "0.33.5",
+    "typescript": "5.7.3",
+    "vitest": "3.0.7"
+  }
+}

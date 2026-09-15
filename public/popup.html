@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>X Video Downloader</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <img src="icons/32.png" width="28" height="28" alt="" />
+      <h1>X Video Downloader</h1>
+      <button
+        id="clear"
+        title="清除已结束的任务"
+        aria-label="清除已结束的任务"
+      ></button>
+    </header>
+    <main id="jobs" aria-live="polite"></main>
+    <footer>
+      <span id="summary"></span
+      ><button
+        id="downloads"
+        title="打开 Chrome 下载记录"
+        aria-label="打开 Chrome 下载记录"
+      ></button>
+    </footer>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
