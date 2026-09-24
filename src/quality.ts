@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import type { Candidate, MediaPlan, QualitySummary } from "./types";
 export function compareCandidates(a: Candidate, b: Candidate): number {
   const pixels = b.width * b.height - a.width * a.height;
@@ -42,10 +43,10 @@ const number = (n: number) => Number(n.toFixed(2)).toString();
 export function videoQuality(v: QualitySummary["video"]): string {
   return v
     ? `${v.width} × ${v.height}${v.fps ? ` · ${number(v.fps)} fps` : ""}`
-    : "暂不可用";
+    : t("labelUnavailable");
 }
 export function audioQuality(a: QualitySummary["audio"]): string {
-  if (!a) return "无音轨";
+  if (!a) return t("labelNoAudio");
   return [
     a.codec?.toUpperCase(),
     a.bitrate

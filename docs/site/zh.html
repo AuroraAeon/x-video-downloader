@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>X Video Downloader — 适用于 X 视频的 Chrome MV3 扩展</title>
+    <meta
+      name="description"
+      content="X Video Downloader 是独立的 Manifest V3 Chrome 扩展（Chrome 116+），下载 X 帖子中可取得的最高画质视频（MP4）或无损音频（M4A），下载前就在播放器下方显示分辨率、帧率、码率与采样率。无后端、无 API Key、无遥测。"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="alternate"
+      hreflang="zh-Hans"
+      href="https://auroraeon.github.io/x-video-downloader/zh.html"
+    />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href="https://auroraeon.github.io/x-video-downloader/"
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://auroraeon.github.io/x-video-downloader/"
+    />
+    <link rel="canonical" href="https://auroraeon.github.io/x-video-downloader/zh.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="X Video Downloader" />
+    <meta
+      property="og:title"
+      content="X Video Downloader — 下载前就显示可取得的最高画质"
+    />
+    <meta
+      property="og:description"
+      content="独立的 Manifest V3 浏览器扩展：保存 X 帖子中可取得的最高画质视频（MP4）或无损音频（M4A）。无后端、无 API Key、无遥测。"
+    />
+    <meta
+      property="og:url"
+      content="https://auroraeon.github.io/x-video-downloader/zh.html"
+    />
+    <meta property="og:locale" content="zh_CN" />
+    <meta
+      property="og:image"
+      content="https://auroraeon.github.io/x-video-downloader/assets/shot-zh.png"
+    />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="800" />
+    <meta
+      property="og:image:alt"
+      content="视频右上角的下载按钮，播放器下方显示画质与音质两行信息"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="X Video Downloader — 适用于 X 视频的 Chrome MV3 扩展"
+    />
+    <meta
+      name="twitter:description"
+      content="下载 X 帖子中可取得的最高画质视频或无损音频，下载前就在播放器下方看到真实参数。"
+    />
+    <meta
+      name="twitter:image"
+      content="https://auroraeon.github.io/x-video-downloader/assets/shot-zh.png"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "X Video Downloader",
+        "url": "https://auroraeon.github.io/x-video-downloader/zh.html",
+        "applicationCategory": "Utilities/Tools",
+        "applicationSubCategory": "Browser extension",
+        "softwareVersion": "1.3.0",
+        "datePublished": "2026-09-24",
+        "operatingSystem": "Chrome 116 或更新版本、Edge 116 或更新版本",
+        "browserRequirements": "需要支持 Manifest V3 的 Chromium 浏览器",
+        "inLanguage": "zh-Hans",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "codeRepository": "https://github.com/AuroraAeon/x-video-downloader",
+        "sameAs": ["https://github.com/AuroraAeon/x-video-downloader"],
+        "screenshot":
+          "https://auroraeon.github.io/x-video-downloader/assets/shot-zh.png",
+        "featureList": [
+          "下载 X 帖子中可取得的最高画质视频（MP4）",
+          "无损提取 M4A 音频，保留编码、采样率与声道",
+          "下载前在播放器下方显示分辨率、帧率、码率、采样率与声道",
+          "界面支持英文与简体中文，跟随浏览器界面语言",
+          "无后端、无 API Key、无遥测，全部代码随扩展打包"
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="zh.html"
+          >X Video Downloader<small>版本 1.3.0 · Manifest V3</small></a
+        >
+        <nav class="nav" aria-label="页面目录">
+          <a href="#features">功能</a>
+          <a href="#gallery">界面</a>
+          <a href="#quality">画质与音频</a>
+          <a href="#supported">支持范围</a>
+          <a href="#install">安装</a>
+          <a href="#troubleshooting">故障排查</a>
+          <a href="privacy-zh.html">隐私政策</a>
+        </nav>
+        <p class="lang-switch">
+          <a href="index.html" hreflang="en">English</a>
+          <span class="lang-divider" aria-hidden="true">/</span>
+          <span aria-current="page">简体中文</span>
+        </p>
+      </div>
+    </header>
+
+    <main id="top">
+      <div class="hero">
+        <div class="wrap">
+          <span class="eyebrow">独立浏览器扩展 — 与 X Corp. 无任何关联</span>
+          <h1>拿到 X 真正能提供给你的那份最好的文件</h1>
+          <p class="lede">
+            在 X 帖子视频右上角提供一个小型毛玻璃下载按钮，点击可选择最高画质视频（MP4）或最高音质音频（M4A）。分辨率、帧率、音频编码、码率、采样率与声道数会显示在播放器下方，无需先下载。
+          </p>
+          <ul class="badges">
+            <li>Manifest V3</li>
+            <li>Chrome 116+ / Edge 116+</li>
+            <li>无需后端、无需 API Key</li>
+            <li>运行不需要 Python 或 FFmpeg</li>
+            <li>无遥测、无统计</li>
+            <li>源码公开（原创部分 MIT）</li>
+          </ul>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#install">安装</a>
+            <a
+              class="btn btn-secondary"
+              href="https://github.com/AuroraAeon/x-video-downloader/releases/latest"
+              >最新发行版</a
+            >
+            <a class="btn btn-secondary" href="privacy-zh.html">隐私政策</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <section id="features">
+          <h2>功能</h2>
+          <div class="grid">
+            <article class="card">
+              <h3>视频上的画质选择菜单</h3>
+              <p>
+                视频画面内部角落是 28px
+                按钮配 16px 图标。点击展开视频/音频菜单。菜单支持键盘选择、按
+                <code>Escape</code> 关闭，点击外部也会关闭。
+              </p>
+            </article>
+            <article class="card">
+              <h3>下载前就有明细</h3>
+              <p>
+                在播放器之外的正常文档流位置显示分辨率与帧率，以及音频编码、估计码率、采样率和声道数。看到这些数值不需要先下载。
+              </p>
+            </article>
+            <article class="card">
+              <h3>任务弹窗</h3>
+              <p>
+                点击工具栏图标可查看任务列表、实际取得的画质、限制或降级原因，并取消或重试任务，还可以直接跳到 Chrome 自身的下载页面。
+              </p>
+            </article>
+            <article class="card">
+              <h3>文件由 Chrome 保存</h3>
+              <p>
+                下载通过 Chrome 下载管理器完成，保存位置遵从你的 Chrome
+                设置，完全由你决定。文件名示例
+                <code>x_author_1001551623938805763_1_480x360.mp4</code>。
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="gallery">
+          <h2>界面</h2>
+          <div class="shots">
+            <figure>
+              <img
+                src="assets/shot-zh.png"
+                width="1280"
+                height="800"
+                loading="lazy"
+                decoding="async"
+                alt="视频右上角的下载按钮，播放器下方显示画质与音质两行信息"
+              />
+              <figcaption>
+                按钮位于视频画面右上角，播放器下方的两行是已检查出的视频与音频参数。
+              </figcaption>
+            </figure>
+            <figure>
+              <img
+                src="assets/shot-zh-menu.png"
+                width="1280"
+                height="800"
+                loading="lazy"
+                decoding="async"
+                alt="展开的菜单，分别提供最高画质视频与最高音质音频下载"
+              />
+              <figcaption>
+                点击后选择下载最高画质视频或最高音质音频，两项都标注实测参数。
+              </figcaption>
+            </figure>
+            <figure>
+              <img
+                src="assets/shot-en.png"
+                width="1280"
+                height="800"
+                loading="lazy"
+                decoding="async"
+                alt="同一构建在英文浏览器界面语言下的样子"
+              />
+              <figcaption>
+                同一份构建在英文界面语言下的样子：文案跟随浏览器界面语言切换。
+              </figcaption>
+            </figure>
+          </div>
+          <p>
+            以上图片都由发布构建在本机测试样例上渲染：彩色条纹片段与
+            <code>@fixture</code> 账号来自自动化测试，不是真实帖子。可用
+            <code>node scripts/store-assets.mjs</code> 重新生成。
+          </p>
+        </section>
+
+        <section id="quality">
+          <h2>画质与音频行为</h2>
+          <h3>「最高」是怎么定的</h3>
+          <p>
+            「最高」指 X 提供且你当前能取得的版本，不是上传原片。视频候选按实际像素、帧率、同编码码率排序，同档优先直链
+            MP4。播放器当前清晰度、预览图尺寸和 <code>original_info</code>
+            都不直接代表可下载版本。
+          </p>
+          <h3>音频逐轨比较，并且始终无损</h3>
+          <p>
+            所有可用音轨独立比较，按码率、采样率、声道数排序；从 HLS 或 MP4
+            <strong>无损提取为 M4A</strong>，绝不转成有损
+            MP3，也不会静默丢弃配对音轨。HLS 只做无损封装，不重编码。
+          </p>
+          <p>
+            前缀 <code>≈</code> 表示该码率是通过编码包抽样估计得到的，单位为
+            <code>kb/s</code>、<code>kHz</code>、<code>ch</code>。这是测量结果，不是对听感的主观评分。
+          </p>
+          <h3>检查有界、可取消，并且对部分结果诚实</h3>
+          <ul>
+            <li>自动检查不会创建任何下载文件，只读取必要内容。</li>
+            <li>
+              两条有界探测队列优先处理当前可见的视频；滚出视野且未被下载使用的检查会被取消。
+            </li>
+            <li>
+              每个媒体最多四个网络请求并发；32 KiB 的 <code>Range</code>
+              块只读取必要的头部和样本表，不预取整段视频负载。
+            </li>
+            <li>全部候选仍会检查，保留音频 96 包、视频 64 帧的测量范围。</li>
+            <li>
+              检查未完成时信息栏显示「已知&hellip; ·
+              确认中」。部分结果<strong>绝不会</strong>被标为已确认的最高画质，只有完成后才升级为最高可用结果。
+            </li>
+            <li>
+              页面侧超过 45 秒没有结果的探测会自动重发，不会长期停在「检测中」；两条合并任务运行期间仍保留一条探测通道。
+            </li>
+          </ul>
+          <h3>你可能感知到的吞吐限制</h3>
+          <p>
+            一次最多两个活动下载任务，其中最多一个媒体合并或音频提取，最多排队
+            20 个任务。同一视频的视频下载和音频下载分别去重。媒体临时数据放在
+            OPFS 中以控制内存，Chrome 保存完成后删除临时文件。失败候选可自动降级并保留提示；取消、磁盘问题、限流、非法地址会停止任务，而不是无限重试。
+          </p>
+          <div class="panel">
+            <h3 style="margin-top: 0">会话缓存</h3>
+            <p>
+              浏览器会话内复用十五分钟的显示摘要与两分钟的下载候选，后台
+              service worker 休眠和离屏文档关闭不会清空。签名 URL
+              改变会使缓存失效。缓存不跨浏览器会话，也不存储任何鉴权信息。
+            </p>
+          </div>
+        </section>
+
+        <section id="supported">
+          <h2>支持范围与不支持范围</h2>
+          <p>
+            下面就是产品边界，逐条来自扩展自己的声明。没有写在「支持」里的能力，请当作不支持。
+          </p>
+          <div class="split">
+            <div>
+              <h3>支持</h3>
+              <ul class="tick">
+                <li>X 托管的视频。</li>
+                <li>以视频文件存储的动图（GIF）。</li>
+                <li>
+                  含多个视频的帖子：各自独立定位、各自下载。
+                </li>
+                <li>
+                  引用帖与转帖：通过媒体 ID、预览图及帖子链接确定归属；无法确认时不猜测。
+                </li>
+                <li>
+                  先读取网页已有的 GraphQL/SSR 数据，视频接近可视区域时读取有限媒体数据，不足时串行读取所属帖子详情和 X
+                  自有公开嵌入接口作为后备，失败不无限重试。
+                </li>
+                <li>在当前访问条件下已经取得、或正常可以取得的媒体。</li>
+                <li>
+                  关闭或离开来源页面不会取消已开始的任务；后台 worker
+                  休眠或重启后会与离屏任务和 Chrome 下载记录对账。
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3>不支持</h3>
+              <ul class="cross">
+                <li>直播录制，以及 Spaces。</li>
+                <li>外部视频网站。</li>
+                <li>加密 HLS 与 DRM 内容。</li>
+                <li>绕过登录、受保护账号、地区限制或平台验证挑战。</li>
+                <li>取得创作者上传的原片。</li>
+                <li>
+                  浏览器整体退出后从任意分片断点续传未完成的合并 —— 这类任务需要重试。
+                </li>
+                <li>有损转换，例如输出 MP3。</li>
+                <li>
+                  运行时的任何后端、账号、API Key、Python 或 FFmpeg 依赖。
+                </li>
+              </ul>
+            </div>
+          </div>
+          <p>
+            网站随时可能改变 DOM、接口和数据结构。扩展针对当前的站点维护；X
+            改版后需要更新版本。
+          </p>
+        </section>
+
+        <section id="install">
+          <h2>安装方式</h2>
+          <p>
+            三条安装路径，均已标注当前状态。共同要求：Chrome 或 Edge 116
+            及以上。扩展本身没有登录入口，因此不需要登录，也不需要复制 Cookie。
+          </p>
+          <div class="grid">
+            <article class="card">
+              <span class="step">路径 1 · 等待商店审核</span>
+              <h3>Chrome Web Store</h3>
+              <p>审核通过后即为一键安装，并可自动更新。</p>
+              <p>
+                <a
+                  class="btn btn-primary"
+                  href="https://chromewebstore.google.com/detail/x-video-downloader/pending"
+                  >在 Chrome Web Store 获取 X Video Downloader</a
+                >
+              </p>
+              <p class="note">
+                商店 listing URL 只在 Google
+                审核通过后才会分配，所以上面的 <code>&hellip;/pending</code>
+                是占位链接，上架前无法打开。在此之前请使用路径 3。
+              </p>
+            </article>
+
+            <article class="card">
+              <span class="step">路径 2 · 等待商店审核</span>
+              <h3>Microsoft Edge Add-ons</h3>
+              <p>
+                同一个扩展包会提交到 Microsoft Edge Add-ons，供 Edge 用户使用。
+              </p>
+              <p>
+                <a
+                  class="btn btn-primary"
+                  href="https://microsoftedge.microsoft.com/addons"
+                  >在 Microsoft Edge Add-ons 中查找 X Video Downloader</a
+                >
+              </p>
+              <p class="note">
+                Edge 的 listing URL 同样要等 Add-ons
+                商店审核通过后才分配，当前链接指向商店首页。上架前请先用路径
+                3，并在 <code>edge://extensions</code> 打开「开发人员模式」。
+              </p>
+            </article>
+
+            <article class="card">
+              <span class="step">路径 3 · 现在可用</span>
+              <h3>手动：从 GitHub 发行版加载已解压的扩展</h3>
+              <ol>
+                <li>
+                  从<a
+                    href="https://github.com/AuroraAeon/x-video-downloader/releases/latest"
+                    >最新发行版</a
+                  >
+                  下载 <code>x-video-downloader-1.3.0.zip</code>
+                  并解压；同处提供 <code>SHA256SUMS.txt</code> 校验文件。
+                </li>
+                <li>
+                  打开 <code>chrome://extensions</code>，开启右上角「开发者模式」。
+                </li>
+                <li>
+                  点击「加载已解压的扩展程序」，选择解压后的目录 —— 即包含
+                  <code>manifest.json</code> 的那个目录。
+                </li>
+                <li>
+                  刷新已打开的 X 页面，保持原有登录状态，点击视频右上角的下载图标。
+                </li>
+              </ol>
+              <p>
+                扩展安装目录需要保留。更新时把新包解压覆盖到<strong
+                >原先加载的同一个目录</strong
+                >，在
+                <code>chrome://extensions</code>
+                点击卡片上的刷新图标，确认版本为 <strong>1.3.0</strong>
+                后刷新 X 页面。无需重新登录；沿用同一目录可以保留扩展 ID
+                和本地任务记录。
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="permissions">
+          <h2>权限与用途</h2>
+          <div class="table-scroll">
+            <table>
+              <caption>
+                清单申请的权限就是下面这些 —— 没有别的，也没有
+                <code>&lt;all_urls&gt;</code>。
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">权限</th>
+                  <th scope="col">用途</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>downloads</code></td>
+                  <td>启动、取消和跟踪扩展自己创建的下载。</td>
+                </tr>
+                <tr>
+                  <td><code>storage</code></td>
+                  <td>本地任务状态，最多保留 60 条已结束记录。</td>
+                </tr>
+                <tr>
+                  <td><code>offscreen</code></td>
+                  <td>
+                    Worker 媒体处理，以及在下载完成前维持 Blob URL。
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>https://x.com/*</code></td>
+                  <td>页面按钮，以及从同一页面采集媒体数据。</td>
+                </tr>
+                <tr>
+                  <td><code>https://video.twimg.com/*</code></td>
+                  <td>读取媒体清单和音视频数据。</td>
+                </tr>
+                <tr>
+                  <td><code>https://cdn.syndication.twimg.com/*</code></td>
+                  <td>可视视频的公开嵌入元数据后备来源。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            不申请 <code>cookies</code> 权限，不申请调试器权限，不申请全站权限
+            ，也没有登录绕过。媒体请求不携带 X
+            会话鉴权头。所有运行时代码随扩展打包：没有远程脚本、没有
+            <code>eval</code>、没有远程模块加载、没有原生通信，我们也没有任何服务器可连。页面消息只传递媒体记录，不能单独触发下载。
+          </p>
+        </section>
+
+        <section id="troubleshooting">
+          <h2>故障排查</h2>
+          <dl>
+            <dt>能看到的视频上没有按钮</dt>
+            <dd>
+              刷新 X 页面 —— 内容脚本只在页面加载时接入；更新或重新加载扩展后同样要刷新页面。如果你移动过扩展目录，请从新位置重新「加载已解压的扩展程序」。
+            </dd>
+            <dt>信息栏一直停在「检测中」</dt>
+            <dd>
+              刷新 X 页面，或直接打开该帖子。探测有期限且会自动重发；如果 X
+              响应慢或拒绝请求，会明确提示失败，而不是输出猜测数据。
+            </dd>
+            <dt>提示画质受限或已经降级</dt>
+            <dd>
+              打开任务弹窗：里面写明实际取得的画质和原因。最高候选下载失败时会降级并保留警告；来自可能不完整来源的结果会标记限制。取消与重试也在同一弹窗完成。
+            </dd>
+            <dt>X 自身要求登录，或返回 403、限流</dt>
+            <dd>
+              先解决网页访问问题。扩展不绕过登录、保护账号、地区限制或平台验证，也不会在媒体请求中发送 X 会话凭据。
+            </dd>
+            <dt>下载因为 429、磁盘错误或非法地址失败</dt>
+            <dd>
+              这些情况会停止任务而不是循环重试。合并过程会使用临时文件直到 Chrome
+              保存完成，请先清理磁盘空间再重试；限流来自 X，不是来自我们。
+            </dd>
+            <dt>音频选项是灰色不可点</dt>
+            <dd>该媒体确实没有音轨，扩展会明确说明，而不是给你一个假选项。</dd>
+            <dt>合并过程中关闭了浏览器</dt>
+            <dd>
+              被中断的 HLS 合并需要重启后重试；不承诺从任意分片位置断点续传。
+            </dd>
+            <dt>X 改版后一切都不正常了</dt>
+            <dd>
+              X 可以随时改变 DOM 或接口。请先查看
+              <a
+                href="https://github.com/AuroraAeon/x-video-downloader/releases/latest"
+                >发行版</a
+              >
+              是否有新版本；如果已是最新，请带上帖子链接提交 issue。
+            </dd>
+          </dl>
+        </section>
+
+        <section id="transparency">
+          <h2>源码与隐私透明度</h2>
+          <div class="grid">
+            <article class="card">
+              <h3>代码可以直接读</h3>
+              <p>
+                仓库：
+                <a href="https://github.com/AuroraAeon/x-video-downloader"
+                  >AuroraAeon/x-video-downloader</a
+                >。原创代码使用 MIT 许可证，第三方库保留各自的许可证。
+              </p>
+              <p>
+                随扩展打包的第三方库：acorn 8.15.0（MIT，只读语法树解析）、lucide
+                0.468.0（ISC，图标）、mediabunny 1.56.2（MPL-2.0，媒体解析与无损封装，未修改源码）。完整许可证文本随构建保存在
+                <code>dist/THIRD_PARTY_NOTICES.txt</code>。
+              </p>
+            </article>
+            <article class="card">
+              <h3>可复现的产物</h3>
+              <p>
+                发行版包含版本化的 ZIP 和
+                <code>SHA256SUMS.txt</code>。多轮完整构建得到同一个压缩包哈希；条目排序并使用固定时间戳；打包先写入临时目录再原子替换
+                <code>dist</code>。
+              </p>
+              <p>
+                发布校验会拒绝构建目录中的多余文件、放宽的主机权限和被删除的内容安全策略，因此你加载的目录与经过检查的清单一致。
+              </p>
+            </article>
+            <article class="card">
+              <h3>有什么会离开你的设备</h3>
+              <p>
+                只有读取该帖子、以及获取你主动要求的那份媒体所必需的请求，目标只有上面三个域名。没有任何数据发给我们 ——
+                也没有地方可发：无统计、无遥测、无崩溃上报、无后端。
+              </p>
+              <p>
+                存储细节、60 条上限以及如何清除本地记录，请见<a
+                  href="privacy-zh.html"
+                  >隐私政策</a
+                >。
+              </p>
+            </article>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p class="affiliation">
+          <strong>声明。</strong>X Video Downloader
+          是独立项目，<strong>与 X Corp. 没有任何关联，不受其认可、赞助或支持</strong>。“X”
+          及 X 标志是 X Corp. 的商标，本站仅以纯文字形式用于说明兼容性，全站不使用任何 X
+          或 Twitter 的图标、标志或小鸟形象。你对自己下载的内容负责，并应遵守平台条款与适用的著作权法律。
+        </p>
+        <nav aria-label="站内链接">
+          <a href="index.html">Home (English)</a>
+          <a href="zh.html">首页（简体中文）</a>
+          <a href="privacy.html">Privacy policy</a>
+          <a href="privacy-zh.html">隐私政策（简体中文）</a>
+          <a href="https://github.com/AuroraAeon/x-video-downloader">源码仓库</a>
+          <a href="https://github.com/AuroraAeon/x-video-downloader/issues">Issues</a>
+        </nav>
+        <p>版本 1.3.0 · 生效日期 2026-09-24 · 原创代码 MIT，第三方库保留各自许可证。</p>
+      </div>
+    </footer>
+  </body>
+</html>

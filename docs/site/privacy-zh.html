@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>隐私政策 — X Video Downloader</title>
+    <meta
+      name="description"
+      content="X Video Downloader（独立 Manifest V3 Chrome 扩展）隐私政策：不传输任何数据，无遥测、无统计，任务记录仅保存在本地 chrome.storage 并最多保留 60 条已结束记录，不读取也不存储 Cookie 或凭据。"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href="https://auroraeon.github.io/x-video-downloader/privacy.html"
+    />
+    <link
+      rel="alternate"
+      hreflang="zh-Hans"
+      href="https://auroraeon.github.io/x-video-downloader/privacy-zh.html"
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://auroraeon.github.io/x-video-downloader/privacy.html"
+    />
+    <link
+      rel="canonical"
+      href="https://auroraeon.github.io/x-video-downloader/privacy-zh.html"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="zh.html"
+          >X Video Downloader<small>隐私政策 · 版本 1.3.0</small></a
+        >
+        <nav class="nav" aria-label="页面链接">
+          <a href="zh.html">首页</a>
+          <a href="zh.html#install">安装</a>
+          <a href="zh.html#permissions">权限</a>
+        </nav>
+        <p class="lang-switch">
+          <a href="privacy.html" hreflang="en">English</a>
+          <span class="lang-divider" aria-hidden="true">/</span>
+          <span aria-current="page">简体中文</span>
+        </p>
+      </div>
+    </header>
+
+    <main id="top">
+      <div class="wrap doc">
+        <h1>隐私政策</h1>
+        <p>
+          <strong>产品：</strong>X Video Downloader（浏览器扩展） ·
+          <strong>版本：</strong>1.3.0 ·
+          <strong>生效日期：</strong>2026-09-24 ·
+          <strong>数据控制者：</strong><a
+            href="https://github.com/AuroraAeon/x-video-downloader"
+            >AuroraAeon/x-video-downloader</a
+          >
+          仓库的维护者。
+        </p>
+
+        <div class="doc-summary">
+          <h2 style="margin-top: 0">摘要</h2>
+          <ul>
+            <li>
+              扩展不会向我们、也不会向任何由我们控制的第三方服务传输数据。我们没有服务器、没有账号体系，也没有可以接收数据的接口。
+            </li>
+            <li>没有遥测，没有统计，没有崩溃上报。</li>
+            <li>不会把任何内容收集到服务器。</li>
+            <li>
+              唯一存储的数据是你自己的任务记录，只存在于你自己的浏览器里（通过
+              <code>chrome.storage</code>），最多保留 60
+              条已结束记录，一键即可清除。
+            </li>
+            <li>
+              不读取也不存储 Cookie 或凭据。媒体请求绝不携带 X 会话鉴权头。
+            </li>
+            <li>下载的文件由 Chrome 下载管理器保存，位置完全由你控制。</li>
+          </ul>
+        </div>
+
+        <nav class="toc" aria-label="目录">
+          <h2>目录</h2>
+          <ol>
+            <li><a href="#scope">适用范围</a></li>
+            <li><a href="#no-transmission">不传输任何数据</a></li>
+            <li><a href="#network">扩展发起的网络请求</a></li>
+            <li><a href="#local">本地任务记录（唯一存储的数据）</a></li>
+            <li><a href="#cache">会话内缓存</a></li>
+            <li><a href="#cookies">Cookie 与凭据</a></li>
+            <li><a href="#downloads">下载文件的位置</a></li>
+            <li><a href="#not-collected">从不收集的内容</a></li>
+            <li><a href="#third-party">第三方代码与许可证</a></li>
+            <li><a href="#children">儿童隐私</a></li>
+            <li><a href="#retention">保存期限、删除与你的权利</a></li>
+            <li><a href="#changes">本政策的变更</a></li>
+            <li><a href="#contact">联系方式</a></li>
+          </ol>
+        </nav>
+
+        <section id="scope">
+          <h2>1. 适用范围</h2>
+          <p>
+            本政策适用于 X Video Downloader 浏览器扩展（Manifest V3，需要 Chrome
+            116 及以上），包括以 GitHub 发行包分发以及提交到 Chrome Web Store 和
+            Microsoft Edge Add-ons 的版本。它不适用于 X Corp.
+            自身的服务、你使用的浏览器厂商同步或下载历史，也不适用于你访问的其他网站。本项目独立运作，<strong>与 X
+            Corp. 没有任何关联，不受其认可、赞助或支持</strong>。
+          </p>
+        </section>
+
+        <section id="no-transmission">
+          <h2>2. 扩展不向任何地方传输数据</h2>
+          <p>
+            所有运行时代码都打包在扩展内部。没有后端，没有 API
+            Key，没有远程脚本，没有 <code>eval</code>
+            ，没有远程模块加载，也没有原生通信。由于不存在可以接收数据的我们的服务，任何使用信息都无法通过扩展离开你的设备：
+          </p>
+          <ul>
+            <li>
+              <strong>无遥测。</strong>安装次数、你打开了哪些帖子、检查了哪些媒体、下载了哪些文件、任务是否失败 —— 这些都不会上报给我们。
+            </li>
+            <li>
+              <strong>无统计与跟踪。</strong>没有统计 SDK，没有信标，没有设备指纹，没有广告标识符。
+            </li>
+            <li>
+              <strong>无崩溃或错误上报。</strong>错误只呈现给你本人（在任务弹窗里），不会发送到任何收集服务。
+            </li>
+            <li>
+              <strong>不会把任何内容收集到服务器。</strong>因为没有服务器。
+            </li>
+            <li>
+              内容安全策略把扩展页面限制为
+              <code>script-src 'self'; object-src 'none'; worker-src 'self'</code>，并把连接限制为
+              <code>connect-src 'self' https://video.twimg.com https://cdn.syndication.twimg.com</code>，因此打包代码无法向任意外部主机回传数据。
+            </li>
+            <li>
+              来自页面的消息只传递媒体记录，不能单独触发下载；只有内容脚本界面中可信的操作才可以启动下载。
+            </li>
+          </ul>
+        </section>
+
+        <section id="network">
+          <h2>3. 扩展发起的网络请求</h2>
+          <p>
+            唯一的对外流量，就是读取你正在浏览的那条帖子、以及获取你主动要求下载的那份媒体所必需的请求。主机权限严格限定为：
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">主机</th>
+                  <th scope="col">用途</th>
+                  <th scope="col">发送的数据</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>https://x.com/*</code></td>
+                  <td>显示按钮，并读取该页面中已经存在的媒体数据。</td>
+                  <td>由你自己的浏览器会话发起的普通页面请求。</td>
+                </tr>
+                <tr>
+                  <td><code>https://video.twimg.com/*</code></td>
+                  <td>
+                    读取媒体清单和音视频数据；检查阶段执行有界的
+                    <code>Range</code> 读取，只取头部与样本表。
+                  </td>
+                  <td>
+                    你要下载的 CDN 地址；明确不附加 X 会话鉴权头。
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>https://cdn.syndication.twimg.com/*</code></td>
+                  <td>可视视频的公开嵌入元数据后备来源。</td>
+                  <td>公开的媒体标识。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            检查过程有界且可取消：两条探测队列优先处理可见视频，每个媒体最多四个请求并发，32
+            KiB 的 <code>Range</code>
+            读取只取必要内容而不预取整段视频负载。自动检查不创建任何文件。
+          </p>
+        </section>
+
+        <section id="local">
+          <h2>4. 本地任务记录 —— 唯一存储的数据</h2>
+          <p>
+            任务历史通过 <code>chrome.storage</code>
+            写入你的浏览器，使用 <code>storage</code>
+            权限。一条记录可能包含：
+          </p>
+          <ul>
+            <li>帖子 ID；</li>
+            <li>作者账号名；</li>
+            <li>媒体 URL；</li>
+            <li>输出文件名。</li>
+          </ul>
+          <p>
+            这些数据从不离开浏览器。它存在的意义，是让任务弹窗能够显示任务、实际取得的画质、限制或降级原因，并让你取消或重试。<strong>已结束的记录最多保留
+            60 条</strong>；当新的结束任务使列表超过该上限时，最早的记录会被自动丢弃。
+          </p>
+          <h3>如何清除</h3>
+          <ol>
+            <li>
+              点击 X Video Downloader
+              工具栏图标，使用「清除已结束的任务」（弹窗标题栏的垃圾桶图标）。这会移除存储的任务记录。
+            </li>
+            <li>
+              或者在 <code>chrome://extensions</code>（Edge 中为
+              <code>edge://extensions</code>）移除扩展，其本地存储随之消失。
+            </li>
+            <li>
+              或者在 Chrome/Edge
+              中清除浏览器自身的扩展站点数据，做更彻底的清理。
+            </li>
+          </ol>
+          <p class="note">
+            <strong>清除任务不会删除已经下载的文件</strong>，也不会清除 Chrome
+            自身的下载历史；它只移除扩展的记录。要删除媒体请使用文件管理器；要清除列表请使用
+            Chrome 的下载页面。
+          </p>
+        </section>
+
+        <section id="cache">
+          <h2>5. 会话内缓存</h2>
+          <p>
+            为避免重复探测同一媒体，扩展会在浏览器会话内保留短期条目：显示摘要
+            15 分钟、下载候选 2 分钟。它们在后台 service worker 休眠和离屏文档（<code>offscreen</code>）关闭之后仍然存在，这就是重新打开同一视频时信息出得很快的原因。
+          </p>
+          <ul>
+            <li>
+              因此带签名的 CDN URL 会在会话内于内存中短暂保留；它们绝不会与凭据一起持久化。
+            </li>
+            <li>签名 URL 改变时，对应缓存条目失效并重新获取。</li>
+            <li>缓存不跨浏览器会话。</li>
+            <li>其中不存储任何鉴权信息。</li>
+          </ul>
+        </section>
+
+        <section id="cookies">
+          <h2>6. Cookie 与凭据</h2>
+          <p>
+            扩展不申请 <code>cookies</code>
+            权限，也不申请调试器权限或任何全站权限。它不读取 Cookie、会话令牌、密码或鉴权头，也不存储这些内容；它无法、也不会导出登录状态，安装时不需要登录，也不需要复制任何
+            Cookie。媒体请求绝不携带 X 会话鉴权头。扩展没有绕过登录墙、受保护账号、地区限制或平台验证的机制：只能处理在当前访问条件下已经取得、或正常可以取得的媒体。
+          </p>
+        </section>
+
+        <section id="downloads">
+          <h2>7. 下载文件的位置</h2>
+          <p>
+            文件由 Chrome
+            下载管理器保存（使用 <code>downloads</code>
+            权限），因此保存目录遵从你自己的 Chrome
+            设置，完全由用户控制。文件名形如
+            <code>x_author_1001551623938805763_1_480x360.mp4</code>。媒体处理期间，临时数据存放在属于该扩展的
+            OPFS 中，Chrome 保存完成后即删除；磁盘空间不足时任务会以错误停止，而不是悄悄写到别处。文件生成之后不会被上传到任何地方。
+          </p>
+        </section>
+
+        <section id="not-collected">
+          <h2>8. 从不收集的内容</h2>
+          <p>
+            不收集个人标识符、姓名或邮箱，不收集 X
+            凭据或 Cookie，不收集浏览历史，不收集你访问过的页面清单（超出你自己发起的任务之外），不收集按键、屏幕截图、设备或硬件标识、由我们获取的
+            IP 地址、位置信息、广告或持久化标识符，也不会把音视频内容发送到任何地方。没有账号，因此不存在可供构建的用户画像。
+          </p>
+        </section>
+
+        <section id="third-party">
+          <h2>9. 第三方代码与许可证</h2>
+          <p>
+            以下库随扩展打包。它们都是包内的本地代码；不会引入任何远程服务，也不会自行发送数据。
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">库</th>
+                  <th scope="col">版本</th>
+                  <th scope="col">许可证</th>
+                  <th scope="col">用途</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>acorn</td>
+                  <td>8.15.0</td>
+                  <td>MIT</td>
+                  <td>对页面数据做只读语法树解析。</td>
+                </tr>
+                <tr>
+                  <td>lucide</td>
+                  <td>0.468.0</td>
+                  <td>ISC</td>
+                  <td>扩展界面图标。</td>
+                </tr>
+                <tr>
+                  <td>mediabunny</td>
+                  <td>1.56.2</td>
+                  <td>MPL-2.0</td>
+                  <td>媒体解析与无损封装。本项目未修改其源码。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            完整许可证文本随扩展打包，位于发布包中的
+            <code>dist/THIRD_PARTY_NOTICES.txt</code>。mediabunny（MPL-2.0）的对应源码可从其上游仓库或锁定版本的
+            npm 包取得。本项目原创代码使用 MIT 许可证，见<a
+              href="https://github.com/AuroraAeon/x-video-downloader"
+              >仓库</a
+            >。
+          </p>
+        </section>
+
+        <section id="children">
+          <h2>10. 儿童隐私</h2>
+          <p>
+            本扩展是配合 X 使用的一般用途下载工具。它不向任何人（包括儿童）收集个人信息，也不传输任何数据，因此不会收集可能受
+            COPPA 或类似制度约束的数据。使用 X 以及从中下载内容，仍需遵守 X
+            自身的条款与年龄要求。
+          </p>
+        </section>
+
+        <section id="retention">
+          <h2>11. 保存期限、删除与你的权利</h2>
+          <p>
+            保存期在设计上就是本地且短暂的：任务记录保留到你主动清除，或超过
+            60 条已结束记录上限时被丢弃；探测缓存只在单次会话内保留几分钟；下载文件按你放置的位置保留，直到你删除。由于我们从不接收数据，我们无法披露、更正或导出我们并不持有的数据，第三方也无从向我们索取。要行使删除权，清除任务列表或卸载扩展即可；两者都在你自己的设备上立即生效，无需向我们提出请求。
+          </p>
+        </section>
+
+        <section id="changes">
+          <h2>12. 本政策的变更</h2>
+          <p>
+            重大变更会在本页发布，并更新生效日期与版本号，同时写进对应扩展版本的更新说明。当前版本
+            <strong>1.3.0</strong> 的生效日期为 <strong>2026-09-24</strong>。
+          </p>
+        </section>
+
+        <section id="contact">
+          <h2>13. 联系方式</h2>
+          <p>
+            与隐私相关的问题 —— 以及针对本站的请求 ——
+            请提交到公开的问题跟踪页，这是本项目指定的联系渠道：<a
+              href="https://github.com/AuroraAeon/x-video-downloader/issues"
+              >github.com/AuroraAeon/x-video-downloader/issues</a
+            >。请不要在那里发布令牌、Cookie
+            或私有链接。本项目没有邮箱支持地址，因为也不需要：扩展不持有任何用户的账号数据。
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p class="affiliation">
+          <strong>声明。</strong>X Video Downloader
+          是独立项目，<strong>与 X Corp.
+          没有任何关联，不受其认可、赞助或支持</strong>。“X”
+          及 X 标志是 X Corp.
+          的商标，本站仅以纯文字形式用于说明兼容性，全站不使用任何 X 或
+          Twitter 的图标、标志或小鸟形象。你对自己下载的内容负责，并应遵守平台条款与适用的著作权法律。
+        </p>
+        <nav aria-label="站内链接">
+          <a href="index.html">Home (English)</a>
+          <a href="zh.html">首页（简体中文）</a>
+          <a href="privacy.html">Privacy policy</a>
+          <a href="privacy-zh.html">隐私政策（简体中文）</a>
+          <a href="https://github.com/AuroraAeon/x-video-downloader">源码仓库</a>
+          <a href="https://github.com/AuroraAeon/x-video-downloader/issues">Issues</a>
+        </nav>
+        <p>
+          隐私政策 · 版本 1.3.0 · 生效日期
+          2026-09-24 · <a href="zh.html">返回产品页</a>。
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

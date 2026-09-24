@@ -60,7 +60,7 @@ describe("restricted media network", () => {
     vi.stubGlobal("fetch", spy);
     await expect(
       createMediaFetch(new AbortController().signal)(url),
-    ).rejects.toThrow("加密");
+    ).rejects.toThrow("encrypted");
     expect(spy).toHaveBeenCalledTimes(1);
   });
   it("rejects HTML error content even if the response says HTTP 200", async () => {
@@ -74,7 +74,7 @@ describe("restricted media network", () => {
     );
     await expect(
       createMediaFetch(new AbortController().signal)(url),
-    ).rejects.toThrow("非视频");
+    ).rejects.toThrow("non-video");
   });
   it("cancels oversized playlist reads", async () => {
     vi.stubGlobal(
@@ -87,7 +87,7 @@ describe("restricted media network", () => {
     );
     await expect(
       createMediaFetch(new AbortController().signal)(url),
-    ).rejects.toThrow("过大");
+    ).rejects.toThrow("too large");
   });
   it("respects cancellation before any request", async () => {
     const control = new AbortController();

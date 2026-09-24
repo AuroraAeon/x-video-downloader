@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {
   Input,
   UrlSource,
@@ -53,7 +54,7 @@ async function describeAudio(
   inputKey: string,
 ): Promise<Candidate> {
   if (await audio.isLive())
-    throw new DownloadError("LIVE", "正在直播的音轨不支持下载");
+    throw new DownloadError("LIVE", t("errLiveAudio"));
   const [codec, sampleRate, channels, stats] = await Promise.all([
     audio.getCodec(),
     audio.getSampleRate(),
@@ -61,7 +62,7 @@ async function describeAudio(
     audio.computePacketStats(96),
   ]);
   if (!codec || !stats.packetCount)
-    throw new DownloadError("NO_AUDIO", "音轨缺少可读取的数据");
+    throw new DownloadError("NO_AUDIO", t("errNoAudioData"));
   const bitrate = stats.averageBitrate;
   return {
     ...v,
@@ -91,7 +92,7 @@ async function describe(
   inputKey: string,
 ): Promise<Candidate> {
   if (await video.isLive())
-    throw new DownloadError("LIVE", "正在直播的媒体不支持下载");
+    throw new DownloadError("LIVE", t("errLiveMedia"));
   const audioTracks = await video.getPairableAudioTracks();
   const scored = await Promise.all(
     audioTracks.map(async (track) => ({
@@ -112,7 +113,7 @@ async function describe(
     video.computeFrameRateMetrics({ targetPacketCount: 64 }),
   ]);
   if (!width || !height)
-    throw new DownloadError("NO_SIZE", "无法确认视频分辨率");
+    throw new DownloadError("NO_SIZE", t("errNoResolution"));
   if (audio) await audio.getDecoderConfig();
   return {
     ...v,
@@ -142,7 +143,7 @@ async function plan(
     audioCandidates: Candidate[] = [],
     warnings: string[] =
       record.source === "syndication"
-        ? ["公开嵌入接口可能缺少部分媒体版本"]
+        ? [t("warnSyndicationMissing")]
         : [];
   await mapLimit(record.variants, 3, async (v, i) => {
     control.signal.throwIfAborted();
@@ -159,7 +160,7 @@ async function plan(
               audioCandidates.push(await describeAudio(audio, v, String(i)));
             } catch (e) {
               if ((e as DownloadError).stop) throw e;
-              warnings.push(`音轨无法检查：${errorText(e)}`);
+              warnings.push(t("warnTrackUncheckable", errorText(e)));
             }
           },
         ),
@@ -170,14 +171,14 @@ async function plan(
           } catch (e) {
             if ((e as DownloadError).stop) throw e;
             warnings.push(
-              `一个 ${v.kind.toUpperCase()} 版本无法解析：${errorText(e)}`,
+              t("warnVariantUnparsed", [v.kind.toUpperCase(), errorText(e)]),
             );
           }
         }),
       ]);
     } catch (e) {
       if ((e as DownloadError).stop) throw e;
-      warnings.push(`${v.kind.toUpperCase()} 候选不可用：${errorText(e)}`);
+      warnings.push(t("warnCandidateUnavailable", [v.kind.toUpperCase(), errorText(e)]));
     } finally {
       clearTimeout(deadline);
       close(input);
@@ -198,7 +199,7 @@ async function plan(
   if (candidates.some((c) => c.audio)) {
     const silent = candidates.filter((c) => !c.audio);
     if (silent.length) {
-      warnings.push("已排除缺少配对音轨的版本");
+      warnings.push(t("warnExcludedUnpaired"));
       for (const c of silent) candidates.splice(candidates.indexOf(c), 1);
     }
   }
@@ -207,7 +208,7 @@ async function plan(
   if (!candidates.length && !audioCandidates.length)
     throw new DownloadError(
       "NO_CANDIDATE",
-      warnings.at(-1) ?? "未找到可下载的视频轨",
+      warnings.at(-1) ?? t("errNoDownloadableVideo"),
     );
   return {
     candidates,
@@ -231,7 +232,7 @@ async function render(
     estimate.quota &&
     estimate.quota - (estimate.usage ?? 0) < expected * 1.15
   )
-    throw new DownloadError("QUOTA", "浏览器可用磁盘空间不足", true);
+    throw new DownloadError("QUOTA", t("errQuota"), true);
   const root = await navigator.storage.getDirectory();
   const dir = await root.getDirectoryHandle("xvd-temp", { create: true });
   const outputName = `${jobId}.${extensionOf(mode)}`;
@@ -253,13 +254,13 @@ async function render(
           )
         : undefined;
     if (mode === "video" && (!video || (await video.isLive())))
-      throw new DownloadError("CHANGED", "媒体清单已变化，请重试");
+      throw new DownloadError("CHANGED", t("errPlanChanged"));
     const audios = video
       ? await video.getPairableAudioTracks()
       : await input.getAudioTracks();
     const audio = audios.find((a) => a.number === candidate.audioTrackId);
     if ((candidate.audio && !audio) || (audio && (await audio.isLive())))
-      throw new DownloadError("NO_AUDIO", "所选视频缺少配对音轨");
+      throw new DownloadError("NO_AUDIO", t("errMissingPairedTrack"));
     conversion = await Conversion.init({
       input,
       output,
@@ -276,7 +277,7 @@ async function render(
       (d) => d.track === video || d.track === audio,
     );
     if (!conversion.isValid || required.length)
-      throw new DownloadError("COPY_FAILED", "所选音视频轨无法无损封装为 MP4");
+      throw new DownloadError("COPY_FAILED", t("errMuxFailed"));
     let last = 0;
     conversion.onProgress = (progress) => {
       if (Date.now() - last > 700) {
@@ -287,7 +288,7 @@ async function render(
     await conversion.execute();
     const completed = await file.getFile();
     if (completed.size < 256)
-      throw new DownloadError("EMPTY_FILE", "合并结果为空");
+      throw new DownloadError("EMPTY_FILE", t("errEmptyMux"));
     const verify = new Input({
       source: new BlobSource(completed),
       formats: [MP4],
@@ -304,7 +305,7 @@ async function render(
       )
         throw new DownloadError(
           "VERIFY_FAILED",
-          "合并文件的画质或音轨验证失败",
+          t("errVerifyVideo"),
         );
       if (
         mode === "audio" &&
@@ -314,7 +315,7 @@ async function render(
           (await actualAudio.getSampleRate()) !== candidate.sampleRate ||
           (await actualAudio.getNumberOfChannels()) !== candidate.channels)
       )
-        throw new DownloadError("VERIFY_AUDIO", "音频文件的编码或音轨校验失败");
+        throw new DownloadError("VERIFY_AUDIO", t("errVerifyAudio"));
     } finally {
       verify.dispose();
     }
@@ -327,7 +328,7 @@ async function render(
       await writable.abort();
     } catch {}
     if ((e as DOMException).name === "QuotaExceededError")
-      throw new DownloadError("QUOTA", "浏览器磁盘配额已用尽", true);
+      throw new DownloadError("QUOTA", t("errDiskQuota"), true);
     throw e;
   } finally {
     close(input);

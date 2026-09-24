@@ -1,0 +1,96 @@
+name: Bug report
+description: Something does not inspect, display or download correctly
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill in what you actually observed. Screenshots of the two lines under the
+        player help more than prose. Never paste cookies, authorization headers or
+        a signed CDN URL that contains a token — those are credentials, not bug
+        details.
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      description: chrome://extensions → X Video Downloader → Version
+      placeholder: "1.3.0"
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      description: chrome://version is the quickest place to read it
+      placeholder: "Chrome 141.0.7390.65 (Official Build) (64-bit) on Windows 11"
+    validations:
+      required: true
+  - type: textarea
+    id: page
+    attributes:
+      label: The post, in words
+      description: >-
+        What kind of post was it — single video, multiple videos, a quote card, a
+        live rebroadcast, an embedded link card? Is the account public? Does the
+        video play in the page itself? Paste the URL only if it is public and you
+        are willing to share it.
+      placeholder: "Public single-video post, plays fine in the timeline"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: >-
+        Quote the strip and any error text exactly, including "checking",
+        "unavailable" or a status code. Say whether the download button appeared,
+        whether the menu opened, and whether a task started.
+      placeholder: |
+        Strip shows "Checking other videos" and never changes.
+        No file appeared in the download shelf.
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: >-
+        chrome://extensions → Details → Inspect views: "service worker" (background)
+        and, if a task ran, the offscreen document. Copy red lines only; do not copy
+        request headers.
+      render: shell
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps and frequency
+      description: How often does it fail, and does scrolling away and back, or
+        reloading the page, change anything?
+      placeholder: |
+        1. Open the post
+        2. Wait for the strip
+        Fails every time; works for other posts in the same tab
+    validations:
+      required: true
+  - type: checkboxes
+    id: known-limits
+    attributes:
+      label: Checked the obvious things first
+      description: >-
+        Both answers save a round trip: they separate "the extension is wrong" from
+        "the page itself is not serving this media".
+      options:
+        - label: >-
+            I checked the limits list in `README.md` (section 行为与边界) and my
+            case is not on it (live streams, Spaces, DRM, or content the page
+            itself will not play for me).
+          required: true
+        - label: >-
+            With the extension disabled the video still plays in that post, so the
+            source is reachable for my account.
+          required: true

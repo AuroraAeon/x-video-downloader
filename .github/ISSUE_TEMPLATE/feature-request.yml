@@ -1,0 +1,41 @@
+name: Feature idea
+description: Something the extension could do better inside its single purpose
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The whole product is one sentence: save the video or audio an X post
+        already plays for you, at the highest quality actually available. Ideas
+        that need a backend, an account, an API key, remote code, bulk capture or
+        rate-limit evasion will be declined — that is what keeps the extension
+        reviewable and installable from a ZIP.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What bothers you today
+      description: Describe the situation, not the button you want.
+      placeholder: >-
+        On a post with three videos I cannot tell which one is 1080p without
+        clicking each.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like instead
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Does it need anything beyond this browser?
+      description: >-
+        Say plainly if the idea needs a server, a login, credentials, a paid plan,
+        or downloading many posts at once.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried instead

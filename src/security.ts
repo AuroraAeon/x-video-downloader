@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {
   MAX_JSON,
   extensionOf,
@@ -11,7 +12,7 @@ export const object = (v: unknown): Record<string, any> | undefined =>
 export const isId = (v: unknown): v is string =>
   typeof v === "string" && /^\d{1,25}$/.test(v);
 export function safeJson(text: string): unknown {
-  if (text.length > MAX_JSON) throw Error("响应过大，已停止解析");
+  if (text.length > MAX_JSON) throw Error(t("errTooLarge"));
   return JSON.parse(text);
 }
 export function mediaUrl(value: unknown): string | undefined {
@@ -95,11 +96,11 @@ export async function boundedText(
       const { value, done } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > limit) throw Error("响应过大，已停止解析");
+      if (size > limit) throw Error(t("errTooLarge"));
       text += decoder.decode(value, { stream: true });
     }
     // Cancelling a locked reader ends the read early instead of rejecting it.
-    if (signal?.aborted) throw Error("响应读取已取消");
+    if (signal?.aborted) throw Error(t("errReadCancelled"));
     return text + decoder.decode();
   } catch (e) {
     void reader.cancel().catch(() => {});

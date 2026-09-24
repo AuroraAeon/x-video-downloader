@@ -189,7 +189,7 @@ describe("message source trust", () => {
     expect(
       (await send(stub, { type: "START", record: record(1), mode: "video" }, forged))
         .error,
-    ).toBe("消息来源不受信任");
+    ).toBe("Message source is not trusted");
     // A content script has no path to the queue-clearing action.
     expect((await send(stub, { type: "CLEAR" }, contentSender(3))).ok).toBe(
       false,

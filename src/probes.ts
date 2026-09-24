@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {
   errorText,
   planKey,
@@ -116,7 +117,7 @@ export class ProbeQueue {
     const timer = setTimeout(
       () =>
         finish(
-          { warnings: [], checkedAt: Date.now(), error: "媒体信息暂不可用" },
+          { warnings: [], checkedAt: Date.now(), error: t("errQualityUnavailable") },
           undefined,
           false,
         ),

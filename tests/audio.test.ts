@@ -79,7 +79,7 @@ describe("audio quality and download identity", () => {
     expect(videoQuality({ width: 1920, height: 1080, fps: 29.97002997 })).toBe(
       "1920 × 1080 · 29.97 fps",
     );
-    expect(audioQuality(undefined)).toBe("无音轨");
+    expect(audioQuality(undefined)).toBe("No audio track");
   });
   it("exposes summaries without source URLs", () => {
     const result = summarize({

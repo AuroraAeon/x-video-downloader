@@ -1,0 +1,167 @@
+name: Release
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      store_target:
+        description: 'Chrome Web Store publish target after upload (empty uses the XVD_WS_TARGET secret; never publish to "default" without a reviewed listing)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - trustedTesters
+          - default
+        default: ''
+permissions:
+  contents: read
+# One release at a time; a superseded tag push must never race the store upload.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    name: Verify and package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - name: Tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match package.json version ${version}"
+            exit 1
+          fi
+      # Identical gates to ci.yml: the store must never receive a build the
+      # branch checks did not pass.
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pnpm test:e2e
+      - run: pnpm test:layout
+      - run: pnpm package
+      - run: pnpm exec node scripts/check-package.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-package
+          path: |
+            release/x-video-downloader-*.zip
+            release/SHA256SUMS.txt
+          if-no-files-found: error
+  github-release:
+    name: GitHub Release
+    needs: verify
+    # workflow_dispatch has no tag, so it only rebuilds and validates.
+    if: startsWith(github.ref, 'refs/tags/v') && github.event.repository.fork == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: release
+      - name: Reuse the release notes
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          notes="release/notes-${version}.md"
+          if [ -f "$notes" ]; then
+            echo "Using tracked release notes $notes"
+            exit 0
+          fi
+          # release/ is gitignored, so the local notes file never reaches CI.
+          # Fall back to this version's CHANGELOG section instead of shipping a
+          # release without a description.
+          tmp="$(mktemp)"
+          {
+            printf '## X Video Downloader %s\n\n' "$version"
+            awk -v v="$version" '
+              index($0, "## " v " -") == 1 { grab = 1; next }
+              grab && /^## / { exit }
+              grab { print }
+            ' CHANGELOG.md
+          } > "$tmp"
+          if [ -s "$tmp" ]; then
+            mv "$tmp" "$notes"
+            echo "Reconstructed $notes from CHANGELOG.md"
+          else
+            rm -f "$tmp"
+            echo "No notes for $version; store-publish will use its generated fallback"
+          fi
+      - name: Publish the GitHub Release
+        run: node scripts/store-publish.mjs release
+      - name: Edge Add-ons hand-off notes
+        run: node scripts/store-publish.mjs edge-package >> "$GITHUB_STEP_SUMMARY"
+  chrome-webstore:
+    name: Chrome Web Store upload
+    needs: verify
+    # Never on fork events: forks cannot see the secrets and must not be able to
+    # trigger a store write at all.
+    if: github.event.repository.fork == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Holds the store credentials and can be set to require manual approval.
+    environment: chrome-webstore
+    concurrency:
+      group: chrome-webstore
+      cancel-in-progress: false
+    env:
+      XVD_WS_CLIENT_ID: ${{ secrets.XVD_WS_CLIENT_ID }}
+      XVD_WS_CLIENT_SECRET: ${{ secrets.XVD_WS_CLIENT_SECRET }}
+      XVD_WS_REFRESH_TOKEN: ${{ secrets.XVD_WS_REFRESH_TOKEN }}
+      XVD_WS_ITEM_ID: ${{ secrets.XVD_WS_ITEM_ID }}
+      XVD_WS_TARGET: ${{ github.event.inputs.store_target || secrets.XVD_WS_TARGET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-package
+          path: release
+      # Job-level `if` cannot read secrets, so the gate is an output instead.
+      - name: Check store credentials
+        id: gate
+        run: |
+          if [ -n "$XVD_WS_CLIENT_ID" ] && [ -n "$XVD_WS_CLIENT_SECRET" ] && [ -n "$XVD_WS_REFRESH_TOKEN" ] && [ -n "$XVD_WS_ITEM_ID" ]; then
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            echo 'chrome-webstore secrets are not configured: running the upload in dry-run only.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload package (dry run when unconfigured)
+        if: steps.gate.outputs.enabled != 'true'
+        run: node scripts/store-publish.mjs webstore-upload --dry-run
+      - name: Upload package
+        if: steps.gate.outputs.enabled == 'true'
+        run: node scripts/store-publish.mjs webstore-upload
+      - name: Publish and poll status
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          if [ -z "$XVD_WS_TARGET" ]; then
+            echo 'XVD_WS_TARGET is empty: uploaded as a draft, not published.' >> "$GITHUB_STEP_SUMMARY"
+            echo "No publish target configured; skipping the publish call."
+            exit 0
+          fi
+          node scripts/store-publish.mjs webstore-publish
+      - name: List store items to recover the item id
+        if: failure() && steps.gate.outputs.enabled == 'true'
+        run: node scripts/store-publish.mjs webstore-list

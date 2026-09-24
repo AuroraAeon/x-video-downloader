@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Privacy policy
+    url: https://auroraeon.github.io/x-video-downloader/privacy.html
+    about: What the extension stores, for how long, and what it never touches
+  - name: 简体中文隐私政策
+    url: https://auroraeon.github.io/x-video-downloader/privacy-zh.html
+    about: 扩展保存什么、保存多久，以及绝不接触的数据

@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy policy — X Video Downloader</title>
+    <meta
+      name="description"
+      content="Privacy policy for X Video Downloader, an independent Manifest V3 Chrome extension: no data transmission, no telemetry, no analytics, local-only task records capped at 60 finished entries, no cookies or credentials read or stored."
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href="https://auroraeon.github.io/x-video-downloader/privacy.html"
+    />
+    <link
+      rel="alternate"
+      hreflang="zh-Hans"
+      href="https://auroraeon.github.io/x-video-downloader/privacy-zh.html"
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://auroraeon.github.io/x-video-downloader/privacy.html"
+    />
+    <link
+      rel="canonical"
+      href="https://auroraeon.github.io/x-video-downloader/privacy.html"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="index.html"
+          >X Video Downloader<small>Privacy policy · version 1.3.0</small></a
+        >
+        <nav class="nav" aria-label="Page links">
+          <a href="index.html">Home</a>
+          <a href="index.html#install">Install</a>
+          <a href="index.html#permissions">Permissions</a>
+        </nav>
+        <p class="lang-switch">
+          <span aria-current="page">English</span>
+          <span class="lang-divider" aria-hidden="true">/</span>
+          <a href="privacy-zh.html" hreflang="zh-Hans">简体中文</a>
+        </p>
+      </div>
+    </header>
+
+    <main id="top">
+      <div class="wrap doc">
+        <h1>Privacy policy</h1>
+        <p>
+          <strong>Product:</strong> X Video Downloader (browser extension) ·
+          <strong>Version:</strong> 1.3.0 · <strong>Effective:</strong>
+          2026-09-24 · <strong>Data controller:</strong> the maintainer of the
+          <a href="https://github.com/AuroraAeon/x-video-downloader"
+          >AuroraAeon/x-video-downloader</a
+          > repository.
+        </p>
+
+        <div class="doc-summary">
+          <h2 style="margin-top: 0">Short version</h2>
+          <ul>
+            <li>
+              The extension transmits no data to us or to any third-party
+              service we control. We have no server, no account system and no
+              endpoint to receive anything.
+            </li>
+            <li>There is no telemetry, no analytics, no crash reporting.</li>
+            <li>Nothing is collected to a server. Ever.</li>
+            <li>
+              The only stored data is your own task history, in your own
+              browser, via <code>chrome.storage</code>, capped at 60 finished
+              entries. You can clear it in one click.
+            </li>
+            <li>
+              No cookies and no credentials are read or written. Media requests
+              never carry X session authentication headers.
+            </li>
+            <li>
+              Downloaded files go to your Chrome download manager, in a
+              destination you control.
+            </li>
+          </ul>
+        </div>
+
+        <nav class="toc" aria-label="Contents">
+          <h2>Contents</h2>
+          <ol>
+            <li><a href="#scope">Scope</a></li>
+            <li><a href="#no-transmission">No data transmission</a></li>
+            <li><a href="#network">Network requests the extension makes</a></li>
+            <li><a href="#local">Local task records</a></li>
+            <li><a href="#cache">In-session cache</a></li>
+            <li><a href="#cookies">Cookies and credentials</a></li>
+            <li><a href="#downloads">Downloaded files</a></li>
+            <li><a href="#not-collected">What is never collected</a></li>
+            <li><a href="#third-party">Third-party code and licenses</a></li>
+            <li><a href="#children">Children&rsquo;s privacy</a></li>
+            <li><a href="#retention">Retention, deletion, your rights</a></li>
+            <li><a href="#changes">Changes to this policy</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ol>
+        </nav>
+
+        <section id="scope">
+          <h2>1. Scope</h2>
+          <p>
+            This policy covers the X Video Downloader browser extension
+            (Manifest V3, Chrome 116 or newer) distributed as a GitHub release
+            archive and submitted to the Chrome Web Store and Microsoft Edge
+            Add-ons. It does not cover X Corp.&rsquo;s own services, your
+            browser vendor&rsquo;s sync or download history, or any other site
+            you visit. The extension is independent and is
+            <strong>not affiliated with, endorsed by, or sponsored by X Corp.</strong>
+          </p>
+        </section>
+
+        <section id="no-transmission">
+          <h2>2. No data is transmitted anywhere by the extension</h2>
+          <p>
+            All runtime code is bundled inside the extension package. There is
+            no backend, no API key, no remote script, no
+            <code>eval</code>, no remote module loading and no native messaging.
+            Because there is no service of ours to receive data, no usage
+            information can leave your machine through the extension:
+          </p>
+          <ul>
+            <li>
+              <strong>No telemetry.</strong> Installation counts, which posts
+              you opened, which media you inspected, which files you downloaded,
+              whether a task failed — none of it is reported to us.
+            </li>
+            <li>
+              <strong>No analytics or tracking.</strong> No analytics SDK, no
+              beacons, no fingerprinting, no advertising identifiers.
+            </li>
+            <li>
+              <strong>No crash or error reporting.</strong> Errors are surfaced
+              to you in the popup, not shipped to a collection service.
+            </li>
+            <li>
+              <strong>Nothing is collected to a server.</strong> There is no
+              server.
+            </li>
+            <li>
+              The content security policy restricts extension pages to
+              <code>script-src 'self'; object-src 'none'; worker-src 'self'</code>
+              and limits connections to
+              <code>connect-src 'self' https://video.twimg.com https://cdn.syndication.twimg.com</code>,
+              so the packaged code cannot phone home to an arbitrary host.
+            </li>
+            <li>
+              Messages from the page carry media records only and cannot start a
+              download by themselves; only a trusted action on the
+              content-script UI can.
+            </li>
+          </ul>
+        </section>
+
+        <section id="network">
+          <h2>3. Network requests the extension makes</h2>
+          <p>
+            The only outbound traffic is the requests required to read the post
+            you are already viewing and to fetch the media you asked to
+            download. Host permissions are exactly:
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Host</th>
+                  <th scope="col">Purpose</th>
+                  <th scope="col">Data sent</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>https://x.com/*</code></td>
+                  <td>
+                    Show the button and read media data already present in that
+                    page.
+                  </td>
+                  <td>Ordinary page requests from your own browser session.</td>
+                </tr>
+                <tr>
+                  <td><code>https://video.twimg.com/*</code></td>
+                  <td>
+                    Read media manifests and audio/video data; bounded
+                    <code>Range</code> reads of headers and sample tables during
+                    inspection.
+                  </td>
+                  <td>
+                    The CDN URL you are downloading, with X session
+                    authentication headers explicitly not attached.
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <code>https://cdn.syndication.twimg.com/*</code>
+                  </td>
+                  <td>
+                    Public embed metadata fallback for videos in view.
+                  </td>
+                  <td>The public media identifier.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Inspection is bounded and cancellable: two probe queues prioritise
+            videos in view, at most four requests run concurrently per media
+            item, and 32&nbsp;KiB <code>Range</code> reads fetch only what is
+            needed rather than prefetching a video body. Automatic inspection
+            creates no files.
+          </p>
+        </section>
+
+        <section id="local">
+          <h2>4. Local task records — the only stored data</h2>
+          <p>
+            Task history is written to your browser through
+            <code>chrome.storage</code>, using the <code>storage</code>
+            permission. A record may contain:
+          </p>
+          <ul>
+            <li>the post ID;</li>
+            <li>the author handle;</li>
+            <li>the media URL;</li>
+            <li>the output filename.</li>
+          </ul>
+          <p>
+            This data never leaves the browser. It exists so the popup can show
+            your tasks with the quality actually obtained and the reason for any
+            limitation or fallback, and so you can cancel or retry them.
+            <strong>Finished records are capped at 60 entries</strong>; when a
+            new finished task pushes the list past that, the oldest records are
+            dropped automatically.
+          </p>
+          <h3>How to clear it</h3>
+          <ol>
+            <li>
+              Click the X Video Downloader toolbar icon and use the
+              <em>clear finished tasks</em> control (the trash icon in the
+              popup header). That removes the stored task records.
+            </li>
+            <li>
+              Or remove the extension in
+              <code>chrome://extensions</code> (<code>edge://extensions</code>
+              in Edge) — its local storage goes with it.
+            </li>
+            <li>
+              Or, in Edge/Chrome, clear the browser&rsquo;s own extension site
+              data if you want a belt-and-braces removal.
+            </li>
+          </ol>
+          <p class="note">
+            <strong>Clearing tasks does not delete downloaded files</strong> and
+            does not clear Chrome&rsquo;s own download history. It only removes
+            the extension&rsquo;s records. To delete media, use your file
+            manager; to clear Chrome&rsquo;s list, use Chrome&rsquo;s downloads
+            page.
+          </p>
+        </section>
+
+        <section id="cache">
+          <h2>5. In-session cache</h2>
+          <p>
+            To avoid re-probing the same media, the extension keeps short-lived
+            entries inside the browser session: display summaries for 15
+            minutes and download candidates for 2&nbsp;minutes. These survive the
+            background service worker sleeping and the
+            <code>offscreen</code> document closing, which is why re-opening a
+            video is fast.
+          </p>
+          <ul>
+            <li>
+              Signed CDN URLs may therefore be held in memory in-session for a
+              short time. They are never persisted together with credentials.
+            </li>
+            <li>
+              If a signed URL changes, the cached entry is invalidated and
+              re-fetched.
+            </li>
+            <li>The cache does not cross browser sessions.</li>
+            <li>No authentication data of any kind is stored in it.</li>
+          </ul>
+        </section>
+
+        <section id="cookies">
+          <h2>6. Cookies and credentials</h2>
+          <p>
+            The extension does not request the <code>cookies</code> permission
+            and does not request the debugger permission or any host-wide
+            grant. It reads no cookies, no session tokens, no passwords and no
+            authentication headers, and it stores none. It cannot and does not
+            export login state; installing it requires no sign-in, and no
+            cookie has to be copied. Media requests never include X session
+            authentication headers. The extension has no
+            mechanism to bypass login walls, protected accounts, regional
+            restrictions or platform challenges: it can only handle media
+            already obtainable, or normally obtainable, under your existing
+            access conditions.
+          </p>
+        </section>
+
+        <section id="downloads">
+          <h2>7. Where downloaded files go</h2>
+          <p>
+            Files are saved by the Chrome download manager, using the
+            <code>downloads</code> permission, so the destination directory
+            follows your own Chrome settings and is entirely user-controlled.
+            Filenames look like
+            <code>x_author_1001551623938805763_1_480x360.mp4</code>. During
+            media processing temporary data lives in OPFS storage belonging to
+            the extension and is deleted once Chrome finishes the save; if the
+            disk is full the task stops with an error rather than silently
+            writing elsewhere. Nothing is uploaded after the file exists.
+          </p>
+        </section>
+
+        <section id="not-collected">
+          <h2>8. What is never collected</h2>
+          <p>
+            No personal identifiers, no names or email addresses, no X
+            credentials or cookies, no browsing history, no list of the pages
+            you visit beyond the tasks you started, no keystrokes, no
+            screenshots, no device or hardware identifiers, no IP address
+            harvested by us, no location, no advertising or persistent
+            identifier, no audio/video content sent anywhere. There is no
+            account, so there is no profile to build.
+          </p>
+        </section>
+
+        <section id="third-party">
+          <h2>9. Third-party code and licenses</h2>
+          <p>
+            These libraries are bundled into the extension. Each is local code
+            inside the package; none of them adds a remote service, and none of
+            them sends data anywhere on its own.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Library</th>
+                  <th scope="col">Version</th>
+                  <th scope="col">License</th>
+                  <th scope="col">Used for</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>acorn</td>
+                  <td>8.15.0</td>
+                  <td>MIT</td>
+                  <td>Read-only syntax tree parsing of page data.</td>
+                </tr>
+                <tr>
+                  <td>lucide</td>
+                  <td>0.468.0</td>
+                  <td>ISC</td>
+                  <td>Icons in the extension UI.</td>
+                </tr>
+                <tr>
+                  <td>mediabunny</td>
+                  <td>1.56.2</td>
+                  <td>MPL-2.0</td>
+                  <td>
+                    Media parsing and lossless muxing. Its source is not
+                    modified by this project.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Full license texts ship with the extension as
+            <code>dist/THIRD_PARTY_NOTICES.txt</code> in the released package.
+            Corresponding source for mediabunny (MPL-2.0) is available from its
+            upstream repository or from the locked npm version. Original code in
+            this project is MIT-licensed; see
+            <a href="https://github.com/AuroraAeon/x-video-downloader"
+              >the repository</a
+            >.
+          </p>
+        </section>
+
+        <section id="children">
+          <h2>10. Children&rsquo;s privacy</h2>
+          <p>
+            The extension is a general-purpose download utility that works with
+            X. It collects no personal information from anyone, including
+            children, and transmits nothing, so it gathers no data that could be
+            subject to COPPA or similar regimes. Using X and downloading content
+            from it remains subject to X&rsquo;s own terms and age requirements.
+          </p>
+        </section>
+
+        <section id="retention">
+          <h2>11. Retention, deletion and your rights</h2>
+          <p>
+            Retention is local and short by design: task records stay until you
+            clear them or until the 60-finished-entry cap discards them; the
+            probe cache lasts minutes inside one session; downloaded files stay
+            wherever you put them until you delete them. Because we never
+            receive data, we cannot disclose, correct or export data we do not
+            hold — and there is nothing for a third party to request from us.
+            To exercise deletion, clear the task list or uninstall the
+            extension; both act immediately, on your own device, with no
+            request to us needed.
+          </p>
+        </section>
+
+        <section id="changes">
+          <h2>12. Changes to this policy</h2>
+          <p>
+            Material changes will be published on this page with a new effective
+            date and version, alongside the release notes of the extension
+            version they apply to. This version
+            <strong>1.3.0</strong> is effective <strong>2026-09-24</strong>.
+          </p>
+        </section>
+
+        <section id="contact">
+          <h2>13. Contact</h2>
+          <p>
+            Questions about privacy — and requests concerning this site — go to
+            the public issue tracker, which is the designated contact channel
+            for this project:
+            <a href="https://github.com/AuroraAeon/x-video-downloader/issues"
+              >github.com/AuroraAeon/x-video-downloader/issues</a
+            >. Please do not post tokens, cookies or private URLs there. There
+            is no email support address, because support does not need one: the
+            extension holds no account data for any user.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p class="affiliation">
+          <strong>Disclaimer.</strong> X Video Downloader is an independent
+          project and is <strong>not affiliated with, endorsed by, or sponsored
+          by X Corp.</strong> &ldquo;X&rdquo; and the X logo are trademarks of
+          X Corp. and appear here in plain text only to describe compatibility;
+          no X or Twitter mark, logo or bird imagery is used on this site. You
+          are responsible for the content you download and must respect the
+          platform&rsquo;s terms and applicable copyright law.
+        </p>
+        <nav aria-label="Site links">
+          <a href="index.html">Home (English)</a>
+          <a href="zh.html">Home (简体中文)</a>
+          <a href="privacy.html">Privacy policy</a>
+          <a href="privacy-zh.html">隐私政策（简体中文）</a>
+          <a href="https://github.com/AuroraAeon/x-video-downloader">Source repository</a>
+          <a href="https://github.com/AuroraAeon/x-video-downloader/issues">Issues</a>
+        </nav>
+        <p>
+          Privacy policy · version 1.3.0 · effective 2026-09-24 ·
+          <a href="index.html">back to the product page</a>.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

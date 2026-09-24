@@ -1,5 +1,20 @@
 # 更新记录
 
+## 1.3.0 - 2026-09-24
+
+- 全部界面文案、状态、错误与警告改由 `_locales/en` 与 `_locales/zh_CN` 两份消息目录渲染，`manifest` 的名称、描述和按钮标题使用 `__MSG_` 引用；安装后的扩展名、下载菜单、画质信息栏、任务面板与错误提示跟随浏览器界面语言。
+- 媒体 Worker 中 `chrome.i18n` 不可用，因此运行时代码直接读取随包打包的同一份 JSON；`$NAME` 形式的占位符按 `placeholders.content` 解析，与 `manifest` 的解析规则一致。缺少实参时保留占位符原文，不伪造文案。
+- 新增打包门禁：两份目录必须键集一致、参数数量一致，`manifest` 引用的消息在两种语言下都存在，描述不超过 132 字符；未声明 `placeholders` 的 `$1`/`$NAME` 会让 `chrome.i18n.getMessage` 返回残缺文本并污染清单名称与说明，因此单独校验。
+- 布局回归新增真实浏览器中文界面场景，并在英文界面下断言信息栏不残留中文；两套浏览器测试固定 `en-US` 界面语言，结果不再依赖开发机系统区域。
+- 面向托管商店的整合：新增 GitHub Pages 站点与双语隐私政策、`scripts/store-publish.mjs`（GitHub Release 附件与 Chrome Web Store 上传/发布，凭据只读环境变量且支持 dry-run）、`release.yml` 发布工作流与 `docs/stores.md` 提交手册。
+- 新增 `pnpm assets`（`scripts/store-assets.mjs`）：用发布构建在本机测试样例上渲染商店与站点素材，输出 1280×800 截图（中英各含信息栏与下载菜单）、必填的 440×280 小促销图和 1400×560 大图到 `docs/site/assets/`；产品页新增双语截图区，并说明截图来自测试样例而非真实帖子。
+- 隐私声明一致性门禁 `tests/privacy-claims.test.ts`：两份政策的正文主机集合必须恰好等于清单 `host_permissions`、中英两页互指一致，产品页只能提到已授权主机与自有域名，权限表格第一列必须与清单 `permissions` + `host_permissions` 一一对应（双向）；政策文案随之点名 `offscreen` 权限。
+- 站点可发现性：产品页补 Open Graph／Twitter 卡片与 `SoftwareApplication` 结构化数据（价格 0、MIT、不声明尚不存在的商店下载链接），四页 `hreflang` 改为绝对地址并补齐 `x-default`，新增 `sitemap.xml` 与 `robots.txt`；`tests/site.test.ts` 6 项门禁把分享图 URL、版本标注、hreflang 互指、sitemap 条目与商店图尺寸全部纳入 CI。
+- `store-publish.mjs release` 修复：`release/notes-<version>.md` 存在但缺少版本号时不再静默退回生成文案，改为报错退出（原先校验异常被 `ENOENT` 分支吞掉）。
+- 仓库级贡献入口：`CONTRIBUTING.md` 把 AGENTS.md 的硬约束翻译成外部贡献者能照做的九条门禁命令与七条不变量；`SECURITY.md` 说明扩展能接触与不能接触什么、如何核对 `release/SHA256SUMS.txt`，并给出私密上报路径；`.github/ISSUE_TEMPLATE/` 三个表单（bug、feature、config）用结构化字段替代自由文本，且要求先确认关闭扩展后视频仍可播放。
+- 新增 `README.en.md`：仓库首页此前只有中文，而扩展界面与项目主页默认都提供英文。英文页逐段对应中文页，不新增任何能力、速度或用户量声明，两份首页互相链接。
+- `tests/community.test.ts` 13 项门禁把上述文件与两份首页纳入 CI：表单字段类型必须是 GitHub 实际渲染的五种、每个字段有唯一 `id` 和标签、复选确认项必须 `required`、`config.yml` 的 contact 链接必须指向仓库内真实页面、两份 README 相对链接不得失效且必须互指、权限表必须与清单 `permissions` + `host_permissions` 完全相等、首页版本号必须等于 `package.json`，且首页不得声称商店条目已提交或正在审核（此前 README 写的"商店版本审核中"与实际状态不符，已改为"商店尚未上架"）。
+
 ## 1.2.1 - 2026-09-24
 
 - 后台启动恢复改为分阶段降级，单个存储步骤失败只影响该步骤并输出错误，不再让整个消息队列永久失败。

@@ -105,7 +105,7 @@ it("rejects a truncated range", async () => {
     s = f.source(url),
     ref = s.ref();
   try {
-    await expect(s.getSize()).rejects.toThrow("不完整");
+    await expect(s.getSize()).rejects.toThrow("incomplete");
   } finally {
     ref.free();
     f.dispose();

@@ -8,6 +8,22 @@ import selfsigned from "selfsigned";
 import sharp from "sharp";
 import { makeFixtures, tweet, html, root } from "./fixtures.mjs";
 await makeFixtures();
+const catalogues = await Promise.all(
+  ["en", "zh_CN"].map(async (locale) =>
+    JSON.parse(
+      await readFile(`public/_locales/${locale}/messages.json`, "utf8"),
+    ),
+  ),
+);
+/**
+ * Each extension process picks its own UI language, and the offscreen media
+ * worker has no `chrome.i18n`, so behaviour assertions accept either catalogue.
+ * Layout and unit tests keep the strict per-locale copy checks.
+ */
+const copyInAnyLocale = (key) =>
+  catalogues.map((c) => c[key].message.split("$")[0].trim());
+const hasCopyInAnyLocale = (text, key) =>
+  copyInAnyLocale(key).some((prefix) => prefix && text.includes(prefix));
 const out = path.resolve("output/playwright");
 await mkdir(out, { recursive: true });
 const extension = path.resolve("dist");
@@ -100,6 +116,7 @@ const context = await chromium.launchPersistentContext("", {
   channel: process.env.XVD_CHROME ? undefined : "chromium",
   executablePath: process.env.XVD_CHROME,
   headless: true,
+  locale: "en-US",
   args: [
     `--disable-extensions-except=${extension}`,
     `--load-extension=${extension}`,
@@ -329,7 +346,10 @@ try {
   );
   assert.equal(mid.state, "complete", JSON.stringify(mid));
   assert.equal(mid.candidate.kind, "mp4");
-  assert.ok(mid.warnings.some((w) => w.includes("自动改用")));
+  assert.ok(
+    mid.warnings.some((w) => hasCopyInAnyLocale(w, "warnAutoFallback")),
+    JSON.stringify(mid.warnings),
+  );
   results.push("Segment failure during remux falls back to playable MP4");
   // Stop only this extension service worker, keeping its offscreen media worker alive.
   stall = true;
@@ -369,7 +389,10 @@ try {
   const rate = await waitJob(
     (j) => j.record.tweetId === rateId && j.state === "failed",
   );
-  assert.match(rate.error, /限流/);
+  assert.ok(
+    hasCopyInAnyLocale(rate.error, "errRateLimited"),
+    JSON.stringify(rate.error),
+  );
   results.push("429 stops promptly without retry storm");
   await page.setViewportSize({ width: 390, height: 844 });
   mode = "ssr";
@@ -491,7 +514,12 @@ try {
     JSON.stringify(nativeFallback),
   );
   assert.equal(nativeFallback.candidate.kind, "hls");
-  assert.ok(nativeFallback.warnings.some((w) => w.includes("自动改用")));
+  assert.ok(
+    nativeFallback.warnings.some((w) =>
+      hasCopyInAnyLocale(w, "warnAutoFallback"),
+    ),
+    JSON.stringify(nativeFallback.warnings),
+  );
   results.push(
     "Native download interruption cannot prematurely terminate the next HLS candidate during reconciliation",
   );
@@ -614,9 +642,11 @@ try {
   current = tweet("1000000000000000993", "silent");
   await page.goto("https://x.com/fixture/status/" + current.rest_id);
   await page.waitForSelector('xvd-quality[data-state="ready"]');
-  assert.match(
-    await page.locator("xvd-quality").getAttribute("aria-label"),
-    /无音轨/,
+  assert.ok(
+    hasCopyInAnyLocale(
+      await page.locator("xvd-quality").getAttribute("aria-label"),
+      "labelNoAudio",
+    ),
   );
   const beforeSilent = (await readJobs()).length;
   await click("audio");

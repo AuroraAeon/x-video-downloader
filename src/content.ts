@@ -25,6 +25,7 @@ import { SsrDecoder } from "./ssr";
 import { identify, postIds } from "./dom";
 import { audioQuality, videoQuality } from "./quality";
 import { placeVideoUi, videoPlacement } from "./placement";
+import { t } from "./i18n";
 
 interface Player {
   priority: number;
@@ -112,7 +113,25 @@ function schedule() {
     scan();
   }, 16);
 }
-const tooltip = "下载视频或音频";
+const tooltip = t("menuTooltip");
+const stateKeys: Record<string, string> = {
+  queued: "stateQueued",
+  analyzing: "stateAnalyzing",
+  waiting: "stateWaiting",
+  merging: "stateMerging",
+  saving: "stateSaving",
+  complete: "stateComplete",
+  failed: "stateFailed",
+  cancelled: "stateCancelled",
+  interrupted: "stateInterrupted",
+};
+const qualityLabel = (
+  pending: boolean | undefined,
+  warnings: string[],
+  known: string,
+  available: string,
+  best: string,
+) => t(pending ? known : warnings.length ? available : best);
 function render(p: Player) {
   const job = p.job,
     active = job && ACTIVE.has(job.state);
@@ -134,15 +153,39 @@ function render(p: Player) {
   p.button.setAttribute("aria-label", tooltip);
   const q = p.quality;
   p.videoLine.textContent = q
-    ? `${q.pending ? "已知画质" : q.warnings.length ? "可用画质" : "最高画质"}：${q.error ? "暂不可用" : videoQuality(q.video)}${q.pending ? " · 确认中" : ""}`
-    : "最高画质：检测中…";
+    ? t(
+        "valueLine",
+        qualityLabel(
+          q.pending,
+          q.warnings,
+          "labelVideoKnown",
+          "labelVideoAvailable",
+          "labelVideoBest",
+        ),
+        `${q.error ? t("labelUnavailable") : videoQuality(q.video)}${q.pending ? t("suffixConfirming") : ""}`,
+      )
+    : t("valueLine", t("labelVideoBest"), t("labelChecking"));
   p.audioLine.textContent = q
-    ? `${q.pending ? "已知音质" : q.warnings.length ? "可用音质" : "最高音质"}：${q.error ? "暂不可用" : q.pending && !q.audio ? "检测中…" : audioQuality(q.audio)}${q.pending && q.audio ? " · 确认中" : ""}`
-    : "最高音质：检测中…";
+    ? t(
+        "valueLine",
+        qualityLabel(
+          q.pending,
+          q.warnings,
+          "labelAudioKnown",
+          "labelAudioAvailable",
+          "labelAudioBest",
+        ),
+        q.error
+          ? t("labelUnavailable")
+          : q.pending && !q.audio
+            ? t("labelChecking")
+            : `${audioQuality(q.audio)}${q.pending && q.audio ? t("suffixConfirming") : ""}`,
+      )
+    : t("valueLine", t("labelAudioBest"), t("labelChecking"));
   p.info.title = q?.error ?? q?.warnings.join("\n") ?? "";
   p.info.setAttribute(
     "aria-label",
-    `${p.videoLine.textContent}；${p.audioLine.textContent}`,
+    `${p.videoLine.textContent} · ${p.audioLine.textContent}`,
   );
   p.info.dataset.state = q
     ? q.error
@@ -151,21 +194,17 @@ function render(p: Player) {
         ? "partial"
         : "ready"
     : "loading";
-  const state: Record<string, string> = {
-    queued: "排队中",
-    analyzing: "检查中",
-    waiting: "等待处理",
-    merging: "正在处理",
-    saving: "正在下载",
-    complete: "已下载",
-    failed: "下载失败",
-    cancelled: "已取消",
-    interrupted: "已中断",
-  };
+  const statusLine = job
+    ? t(
+        "jobStatus",
+        t(job.mode === "audio" ? "modeAudio" : "modeVideo"),
+        t(stateKeys[job.state] ?? "stateQueued"),
+      )
+    : "";
   p.status.textContent = job
-    ? `${job.mode === "audio" ? "音频" : "视频"}${state[job.state]}${job.candidate ? ` · ${job.candidate.label}` : ""}${job.warnings.length ? " · 受限或降级" : ""}`
+    ? `${statusLine}${job.candidate ? ` · ${job.candidate.label}` : ""}${job.warnings.length ? t("suffixLimited") : ""}`
     : p.busy
-      ? "正在准备下载…"
+      ? t("statusPreparing")
       : "";
   p.status.title = job
     ? [job.error, ...job.warnings].filter(Boolean).join("\n")
@@ -231,7 +270,7 @@ function requestProbe(p: Player) {
         p.quality = {
           checkedAt: Date.now(),
           warnings: [],
-          error: response?.error ?? "检测暂不可用",
+          error: response?.error ?? t("errQualityUnavailable"),
         };
         render(p);
       }
@@ -320,7 +359,7 @@ async function resolve(video: HTMLVideoElement): Promise<MediaRecord> {
   let record = identify(video, [...records.values()]);
   if (record) return record;
   const ids = postIds(video);
-  if (!ids.length) throw Error("无法确认所属帖子，请打开原帖重试");
+  if (!ids.length) throw Error(t("errPostUnknown"));
   for (const id of ids.slice(0, 2)) {
     const response = await fetch(`https://x.com/i/status/${id}`, {
       credentials: "include",
@@ -328,7 +367,7 @@ async function resolve(video: HTMLVideoElement): Promise<MediaRecord> {
       cache: "no-store",
     });
     if ([401, 403, 429].includes(response.status))
-      throw Error(`X 返回 HTTP ${response.status}，请完成登录或稍后重试`);
+      throw Error(t("errHttpLogin", response.status));
     if (response.ok) {
       const doc = new DOMParser().parseFromString(
           await boundedText(response),
@@ -345,7 +384,7 @@ async function resolve(video: HTMLVideoElement): Promise<MediaRecord> {
     record = identify(video, [...records.values()]);
     if (record) return record;
   }
-  throw Error("暂未取得视频元数据，请刷新或打开原帖后重试");
+  throw Error(t("errNoMetadata"));
 }
 async function start(video: HTMLVideoElement, mode: DownloadMode) {
   const p = players.get(video);
@@ -357,9 +396,9 @@ async function start(video: HTMLVideoElement, mode: DownloadMode) {
   try {
     const record = await resolve(video);
     if (!video.isConnected || fingerprint !== p.fingerprint)
-      throw Error("视频已切换，请重试");
+      throw Error(t("errVideoSwitched"));
     const result = await send({ type: "START", mode, record });
-    if (!result?.ok) throw Error(result?.error ?? "无法开始下载");
+    if (!result?.ok) throw Error(result?.error ?? t("errCannotStart"));
     p.job = result.job;
   } catch (e) {
     p.status.textContent = errorText(e);
@@ -407,8 +446,9 @@ function openMenu(video: HTMLVideoElement) {
     const span = document.createElement("span"),
       title = document.createElement("span"),
       detail = document.createElement("small");
-    title.textContent =
-      mode === "video" ? "下载最高画质视频" : "下载最高音质音频";
+    title.textContent = t(
+      mode === "video" ? "menuVideoTitle" : "menuAudioTitle",
+    );
     span.append(title, detail);
     button.append(createElement(mode === "video" ? Video : AudioLines), span);
     button.addEventListener("click", (e) => {

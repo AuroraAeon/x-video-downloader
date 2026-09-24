@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {
   errorText,
   extensionOf,
@@ -47,7 +48,7 @@ function rpc(task: Task, payload: object): Promise<any> {
     let timer: ReturnType<typeof setTimeout>;
     const reset = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => finish(Error("媒体处理超时，请重试")), 90000);
+      timer = setTimeout(() => finish(Error(t("errMediaTimeout"))), 90000);
     };
     const cleanup = () => {
       clearTimeout(timer);
@@ -71,7 +72,7 @@ function rpc(task: Task, payload: object): Promise<any> {
       if (m.type === "error")
         finish(Object.assign(Error(m.error), { stop: m.stop }));
     };
-    const error = () => finish(Error("媒体 Worker 意外退出"));
+    const error = () => finish(Error(t("errWorkerExited")));
     task.reject = (e) => finish(e);
     worker.addEventListener("message", listener);
     worker.addEventListener("error", error);
@@ -84,7 +85,7 @@ async function acquireHls(task: Task) {
     await update(task, { state: "waiting" });
     await new Promise<void>((resolve) => hlsWaiters.push(resolve));
   }
-  if (task.cancelled) throw Error("已取消");
+  if (task.cancelled) throw Error(t("errCancelled"));
   hlsOwner = task.job.id;
 }
 function releaseHls(id: string) {
@@ -116,14 +117,14 @@ async function nativeDownload(task: Task, candidate: Candidate, url: string) {
   });
   if (!response?.ok) {
     task.native = undefined;
-    throw Object.assign(Error(response?.error ?? "Chrome 未能启动下载"), {
+    throw Object.assign(Error(response?.error ?? t("errNotStarted")), {
       stop: response?.stop,
     });
   }
   const outcome = await completion;
   task.native = undefined;
   if (!outcome.ok)
-    throw Object.assign(Error(outcome.error ?? "下载中断"), {
+    throw Object.assign(Error(outcome.error ?? t("errInterrupted")), {
       stop:
         outcome.error === "USER_CANCELED" || outcome.error?.startsWith("FILE_"),
     });
@@ -148,18 +149,18 @@ async function run(task: Task) {
     if (!candidates.length)
       throw Error(
         task.job.mode === "audio"
-          ? "此视频没有可下载的音轨"
-          : "没有可下载的视频轨",
+          ? t("errNoAudioTrack")
+          : t("errNoVideoTrack"),
       );
     await update(task, { warnings: [...task.job.warnings, ...warnings] });
-    let lastError = "所有画质均下载失败";
+    let lastError = t("errAllCandidatesFailed");
     for (const [index, candidate] of candidates.entries()) {
       if (task.cancelled) return;
       if (index > 0)
         await update(task, {
           warnings: [
             ...task.job.warnings,
-            `自动改用 ${candidate.label}：${lastError}`,
+            t("warnAutoFallback", [candidate.label, lastError]),
           ].slice(-16),
         });
       await update(task, { candidate, progress: 0 });
@@ -311,7 +312,7 @@ chrome.runtime.onMessage.addListener((m, sender, reply) => {
     if (task) {
       task.cancelled = true;
       task.worker?.postMessage({ type: "cancel" });
-      task.reject?.(Error("已取消"));
+      task.reject?.(Error(t("errCancelled")));
       task.native?.({ ok: false, error: "USER_CANCELED" });
       hlsWaiters.splice(0).forEach((fn) => fn());
     }

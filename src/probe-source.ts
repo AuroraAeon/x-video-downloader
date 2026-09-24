@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { CustomPathedSource, CustomSource, type SourceRef } from "mediabunny";
 import { mediaUrl } from "./security";
 import { createMediaFetch, DownloadError } from "./network";
@@ -27,7 +28,7 @@ export class ProbeSources {
     return new CustomPathedSource(url, (request) => {
       const path = mediaUrl(String(request.path));
       if (!path)
-        throw new DownloadError("UNSAFE_URL", "媒体地址不在允许范围内", true);
+        throw new DownloadError("UNSAFE_URL", t("errUnsafeUrl"), true);
       let file = this.files.get(path);
       if (!file) {
         file = this.file(path);
@@ -73,14 +74,14 @@ export class ProbeSources {
             Number(range[3]) <= Number(range[2])
           ) {
             void response.body?.cancel();
-            throw Error("媒体 Range 响应无效");
+            throw Error(t("errRangeInvalid"));
           }
           const bytes = await readBytes(response, BLOCK);
           size = Number(range[3]);
           if (bytes.length !== Number(range[2]) - start + 1)
-            throw Error("媒体响应不完整");
+            throw Error(t("errResponseIncomplete"));
           this.total += bytes.length;
-          if (this.total > MAX_TOTAL) throw Error("媒体头部探测超出读取预算");
+          if (this.total > MAX_TOTAL) throw Error(t("errProbeBudget"));
           return bytes;
         }
         // Some CDNs ignore Range. Accept only a bounded small file; never buffer a long video.
@@ -89,7 +90,7 @@ export class ProbeSources {
           playlist ? 1024 * 1024 : MAX_FILE,
         );
         this.total += bytes.length;
-        if (this.total > MAX_TOTAL) throw Error("媒体头部探测超出读取预算");
+        if (this.total > MAX_TOTAL) throw Error(t("errProbeBudget"));
         size = bytes.length;
         whole = bytes;
         return bytes.slice(start, end + 1);
@@ -130,10 +131,10 @@ async function readBytes(response: Response, limit: number) {
   const length = Number(response.headers.get("content-length"));
   if (length > limit) {
     void response.body?.cancel();
-    throw Error("服务器未提供受限 Range 读取");
+    throw Error(t("errNoRangeRead"));
   }
   const reader = response.body?.getReader();
-  if (!reader) throw Error("空媒体响应");
+  if (!reader) throw Error(t("errEmptyProbeResponse"));
   const parts: Uint8Array[] = [];
   let size = 0;
   try {
@@ -141,7 +142,7 @@ async function readBytes(response: Response, limit: number) {
       const { value, done } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > limit) throw Error("媒体探测响应过大");
+      if (size > limit) throw Error(t("errProbeTooLarge"));
       parts.push(value);
     }
   } catch (e) {

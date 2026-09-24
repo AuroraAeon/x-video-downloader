@@ -1,0 +1,2 @@
+This file disables Jekyll processing for the GitHub Pages deployment.
+The site is static HTML and is published from docs/site as-is.

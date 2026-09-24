@@ -1,0 +1,396 @@
+{
+  "extensionName": {
+    "message": "X Video Downloader"
+  },
+  "extensionDescription": {
+    "message": "下载 X 上可取得的最高画质视频或最高音质音频，内联显示媒体参数，HLS 无损封装。"
+  },
+  "menuTooltip": {
+    "message": "下载视频或音频"
+  },
+  "menuVideoTitle": {
+    "message": "下载最高画质视频"
+  },
+  "menuAudioTitle": {
+    "message": "下载最高音质音频"
+  },
+  "labelVideoBest": {
+    "message": "最高画质"
+  },
+  "labelVideoKnown": {
+    "message": "已知画质"
+  },
+  "labelVideoAvailable": {
+    "message": "可用画质"
+  },
+  "labelAudioBest": {
+    "message": "最高音质"
+  },
+  "labelAudioKnown": {
+    "message": "已知音质"
+  },
+  "labelAudioAvailable": {
+    "message": "可用音质"
+  },
+  "labelNoAudio": {
+    "message": "无音轨"
+  },
+  "labelUnavailable": {
+    "message": "暂不可用"
+  },
+  "labelChecking": {
+    "message": "检测中…"
+  },
+  "valueLine": {
+    "message": "$LABEL：$VALUE",
+    "placeholders": {
+      "LABEL": {
+        "content": "$1"
+      },
+      "VALUE": {
+        "content": "$2"
+      }
+    }
+  },
+  "suffixConfirming": {
+    "message": " · 确认中"
+  },
+  "suffixLimited": {
+    "message": " · 受限或降级"
+  },
+  "statusPreparing": {
+    "message": "正在准备下载…"
+  },
+  "jobStatus": {
+    "message": "$MODE$STATE",
+    "placeholders": {
+      "MODE": {
+        "content": "$1"
+      },
+      "STATE": {
+        "content": "$2"
+      }
+    }
+  },
+  "jobStatusCandidate": {
+    "message": "$STATE · $CANDIDATE",
+    "placeholders": {
+      "STATE": {
+        "content": "$1"
+      },
+      "CANDIDATE": {
+        "content": "$2"
+      }
+    }
+  },
+  "modeVideo": {
+    "message": "视频"
+  },
+  "modeAudio": {
+    "message": "音频"
+  },
+  "stateQueued": {
+    "message": "排队中"
+  },
+  "stateAnalyzing": {
+    "message": "检查中"
+  },
+  "stateWaiting": {
+    "message": "等待处理"
+  },
+  "stateMerging": {
+    "message": "正在处理"
+  },
+  "stateSaving": {
+    "message": "正在下载"
+  },
+  "stateComplete": {
+    "message": "已下载"
+  },
+  "stateFailed": {
+    "message": "下载失败"
+  },
+  "stateCancelled": {
+    "message": "已取消"
+  },
+  "stateInterrupted": {
+    "message": "已中断"
+  },
+  "actionCancel": {
+    "message": "取消"
+  },
+  "actionRetry": {
+    "message": "重试"
+  },
+  "popupEmpty": {
+    "message": "暂无下载任务"
+  },
+  "popupSummary": {
+    "message": "$ACTIVE 个进行中 · $DONE 个已完成",
+    "placeholders": {
+      "ACTIVE": {
+        "content": "$1"
+      },
+      "DONE": {
+        "content": "$2"
+      }
+    }
+  },
+  "popupClearTitle": {
+    "message": "清除已结束的任务"
+  },
+  "popupDownloadsTitle": {
+    "message": "打开 Chrome 下载记录"
+  },
+  "menuJobHeading": {
+    "message": "任务列表"
+  },
+  "errUntrustedSender": {
+    "message": "消息来源不受信任"
+  },
+  "errStartFromButton": {
+    "message": "请从视频旁的按钮开始下载"
+  },
+  "errInvalidMetadata": {
+    "message": "媒体元数据无效"
+  },
+  "errInvalidVideoMetadata": {
+    "message": "视频元数据无效"
+  },
+  "errInvalidPostId": {
+    "message": "帖子 ID 无效"
+  },
+  "errInvalidMode": {
+    "message": "下载类型无效"
+  },
+  "errTaskFinished": {
+    "message": "任务已经结束"
+  },
+  "errJobNotFound": {
+    "message": "未找到该任务"
+  },
+  "errUnknownAction": {
+    "message": "未知操作"
+  },
+  "errQueueFull": {
+    "message": "下载队列已满，请等待现有任务结束"
+  },
+  "errBusyInspecting": {
+    "message": "正在检查其他视频"
+  },
+  "errCleanupRetry": {
+    "message": "正在清理上一次任务，请稍后重试"
+  },
+  "errUrlValidation": {
+    "message": "媒体地址校验失败"
+  },
+  "errRedirectBlocked": {
+    "message": "Chrome 下载被重定向到未授权地址"
+  },
+  "errRestarted": {
+    "message": "浏览器或媒体处理环境已重启，请重试"
+  },
+  "errInterrupted": {
+    "message": "下载中断"
+  },
+  "errCancelled": {
+    "message": "已取消"
+  },
+  "errNotStarted": {
+    "message": "Chrome 未能启动下载"
+  },
+  "errMediaTimeout": {
+    "message": "媒体处理超时，请重试"
+  },
+  "errWorkerExited": {
+    "message": "媒体 Worker 意外退出"
+  },
+  "errNoAudioTrack": {
+    "message": "此视频没有可下载的音轨"
+  },
+  "errNoVideoTrack": {
+    "message": "没有可下载的视频轨"
+  },
+  "errNoDownloadableVideo": {
+    "message": "未找到可下载的视频轨"
+  },
+  "errAllCandidatesFailed": {
+    "message": "所有画质均下载失败"
+  },
+  "errLiveAudio": {
+    "message": "正在直播的音轨不支持下载"
+  },
+  "errLiveMedia": {
+    "message": "正在直播的媒体不支持下载"
+  },
+  "errNoAudioData": {
+    "message": "音轨缺少可读取的数据"
+  },
+  "errNoResolution": {
+    "message": "无法确认视频分辨率"
+  },
+  "errMissingPairedTrack": {
+    "message": "所选视频缺少配对音轨"
+  },
+  "errMuxFailed": {
+    "message": "所选音视频轨无法无损封装为 MP4"
+  },
+  "errEmptyMux": {
+    "message": "合并结果为空"
+  },
+  "errVerifyVideo": {
+    "message": "合并文件的画质或音轨验证失败"
+  },
+  "errVerifyAudio": {
+    "message": "音频文件的编码或音轨校验失败"
+  },
+  "errQuota": {
+    "message": "浏览器可用磁盘空间不足"
+  },
+  "errDiskQuota": {
+    "message": "浏览器磁盘配额已用尽"
+  },
+  "errPlanChanged": {
+    "message": "媒体清单已变化，请重试"
+  },
+  "errUnsafeUrl": {
+    "message": "媒体地址不在允许范围内"
+  },
+  "errTimeout": {
+    "message": "媒体请求超时"
+  },
+  "errRateLimited": {
+    "message": "X 媒体服务限流，请稍后重试"
+  },
+  "errHttpStatus": {
+    "message": "媒体服务返回 HTTP $STATUS",
+    "placeholders": {
+      "STATUS": {
+        "content": "$1"
+      }
+    }
+  },
+  "errRedirectRejected": {
+    "message": "媒体重定向被拒绝"
+  },
+  "errNotVideo": {
+    "message": "媒体服务返回了非视频内容"
+  },
+  "errPlaylistInvalid": {
+    "message": "HLS 清单无效"
+  },
+  "errEncrypted": {
+    "message": "该 HLS 使用加密，不支持无损下载"
+  },
+  "errEmptyResponse": {
+    "message": "媒体响应为空"
+  },
+  "errNetwork": {
+    "message": "媒体网络请求失败"
+  },
+  "errTooLarge": {
+    "message": "响应过大，已停止解析"
+  },
+  "errReadCancelled": {
+    "message": "响应读取已取消"
+  },
+  "errRangeInvalid": {
+    "message": "媒体 Range 响应无效"
+  },
+  "errResponseIncomplete": {
+    "message": "媒体响应不完整"
+  },
+  "errProbeBudget": {
+    "message": "媒体头部探测超出读取预算"
+  },
+  "errNoRangeRead": {
+    "message": "服务器未提供受限 Range 读取"
+  },
+  "errEmptyProbeResponse": {
+    "message": "空媒体响应"
+  },
+  "errProbeTooLarge": {
+    "message": "媒体探测响应过大"
+  },
+  "errQualityUnavailable": {
+    "message": "媒体信息暂不可用"
+  },
+  "errPostUnknown": {
+    "message": "无法确认所属帖子，请打开原帖重试"
+  },
+  "errHttpLogin": {
+    "message": "X 返回 HTTP $STATUS，请完成登录或稍后重试",
+    "placeholders": {
+      "STATUS": {
+        "content": "$1"
+      }
+    }
+  },
+  "errNoMetadata": {
+    "message": "暂未取得视频元数据，请刷新或打开原帖后重试"
+  },
+  "errVideoSwitched": {
+    "message": "视频已切换，请重试"
+  },
+  "errCannotStart": {
+    "message": "无法开始下载"
+  },
+  "errSyndicationHttp": {
+    "message": "X 公开嵌入接口返回 HTTP $STATUS",
+    "placeholders": {
+      "STATUS": {
+        "content": "$1"
+      }
+    }
+  },
+  "warnSyndicationPartial": {
+    "message": "媒体信息来自公开嵌入接口，可能不完整"
+  },
+  "warnSyndicationMissing": {
+    "message": "公开嵌入接口可能缺少部分媒体版本"
+  },
+  "warnAutoFallback": {
+    "message": "自动改用 $CANDIDATE：$DETAIL",
+    "placeholders": {
+      "CANDIDATE": {
+        "content": "$1"
+      },
+      "DETAIL": {
+        "content": "$2"
+      }
+    }
+  },
+  "warnTrackUncheckable": {
+    "message": "音轨无法检查：$DETAIL",
+    "placeholders": {
+      "DETAIL": {
+        "content": "$1"
+      }
+    }
+  },
+  "warnVariantUnparsed": {
+    "message": "$KIND 版本无法解析：$DETAIL",
+    "placeholders": {
+      "KIND": {
+        "content": "$1"
+      },
+      "DETAIL": {
+        "content": "$2"
+      }
+    }
+  },
+  "warnCandidateUnavailable": {
+    "message": "$KIND 候选不可用：$DETAIL",
+    "placeholders": {
+      "KIND": {
+        "content": "$1"
+      },
+      "DETAIL": {
+        "content": "$2"
+      }
+    }
+  },
+  "warnExcludedUnpaired": {
+    "message": "已排除缺少配对音轨的版本"
+  }
+}

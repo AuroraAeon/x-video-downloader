@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import {
   ACTIVE,
   ALL_STATES,
@@ -53,7 +54,7 @@ const ready = (async () => {
         // version must not reach the popup or content label maps.
         if (!ALL_STATES.includes(job.state)) {
           job.state = "interrupted";
-          job.error ??= "浏览器或媒体处理环境已重启，请重试";
+          job.error ??= t("errRestarted");
         }
         job.warnings ??= [];
         job.progress = typeof job.progress === "number" ? job.progress : 0;
@@ -107,7 +108,7 @@ function nativeStatus(item: chrome.downloads.DownloadItem) {
   return item.state === "complete"
     ? { ok: true }
     : item.state === "interrupted"
-      ? { ok: false, error: item.error ?? "下载中断" }
+      ? { ok: false, error: item.error ?? t("errInterrupted") }
       : undefined;
 }
 async function reconcile() {
@@ -142,7 +143,7 @@ async function reconcile() {
     if (!live.ids?.includes(job.id))
       await patch(job, {
         state: "interrupted",
-        error: "浏览器或媒体处理环境已重启，请重试",
+        error: t("errRestarted"),
       });
   }
 }
@@ -225,7 +226,7 @@ async function handle(
     }
     const job = jobs.get(m.id);
     if (!job || !ACTIVE.has(job.state))
-      return { ok: false, error: "任务已经结束", stop: true };
+      return { ok: false, error: t("errTaskFinished"), stop: true };
     if (m.type === "EVENT") {
       const p = m.patch;
       if (p.candidate && p.candidate.id !== job.candidate?.id) {
@@ -259,7 +260,7 @@ async function handle(
           job.mode === "video" &&
           url !== candidate.url)
       )
-        return { ok: false, error: "媒体地址校验失败", stop: true };
+        return { ok: false, error: t("errUrlValidation"), stop: true };
       const name = filename(job.record, candidate.label, job.mode);
       try {
         const downloadId = await chrome.downloads.download({
@@ -278,7 +279,7 @@ async function handle(
           await chrome.downloads.cancel(downloadId).catch(() => {});
           return {
             ok: false,
-            error: "Chrome 下载被重定向到未授权地址",
+            error: t("errRedirectBlocked"),
             stop: true,
           };
         }
@@ -295,16 +296,16 @@ async function handle(
     }
   }
   if (!fromContent && !fromPopup)
-    return { ok: false, error: "消息来源不受信任" };
+    return { ok: false, error: t("errUntrustedSender") };
   if (m.type === "PROBE" && fromContent) {
     const record = validateRecord(m.record);
-    if (!record) return { ok: false, error: "媒体元数据无效" };
+    if (!record) return { ok: false, error: t("errInvalidMetadata") };
     const key = planKey(record),
       cached = cache.getQuality(key);
     if (cached) return { ok: true, quality: cached, key };
     pruneWatchers(watchers);
     if (watchers.size >= MAX_WATCHERS && !watchers.has(key))
-      return { ok: false, error: "正在检查其他视频" };
+      return { ok: false, error: t("errBusyInspecting") };
     const tabs = watchers.get(key) ?? new Map<number, number>();
     tabs.set(sender.tab!.id!, Date.now());
     watchers.set(key, tabs);
@@ -344,7 +345,7 @@ async function handle(
     return { ok: true };
   }
   if (m.type === "SYNDICATION" && fromContent) {
-    if (!isId(m.id)) return { ok: false, error: "帖子 ID 无效" };
+    if (!isId(m.id)) return { ok: false, error: t("errInvalidPostId") };
     const token = ((Number(m.id) / 1e15) * Math.PI)
       .toString(36)
       .replace(/(0+|\.)/g, "");
@@ -357,7 +358,7 @@ async function handle(
       },
     );
     if (!response.ok)
-      return { ok: false, error: `X 公开嵌入接口返回 HTTP ${response.status}` };
+      return { ok: false, error: t("errSyndicationHttp", response.status) };
     return {
       ok: true,
       records: extractMedia(
@@ -367,22 +368,22 @@ async function handle(
     };
   }
   if (m.type === "START") {
-    if (!fromContent) return { ok: false, error: "请从视频旁的按钮开始下载" };
+    if (!fromContent) return { ok: false, error: t("errStartFromButton") };
     const record = validateRecord(m.record);
-    if (!record) return { ok: false, error: "视频元数据无效" };
+    if (!record) return { ok: false, error: t("errInvalidVideoMetadata") };
     const mode =
       m.mode === "audio"
         ? "audio"
         : m.mode === "video" || m.mode === undefined
           ? "video"
           : undefined;
-    if (!mode) return { ok: false, error: "下载类型无效" };
+    if (!mode) return { ok: false, error: t("errInvalidMode") };
     const existing = [...jobs.values()].find(
       (j) => j.key === jobKey(record, mode) && ACTIVE.has(j.state),
     );
     if (existing) return { ok: true, job: existing };
     if ([...jobs.values()].filter((j) => ACTIVE.has(j.state)).length >= 20)
-      return { ok: false, error: "下载队列已满，请等待现有任务结束" };
+      return { ok: false, error: t("errQueueFull") };
     const now = Date.now();
     const job: Job = {
       id: crypto.randomUUID(),
@@ -395,7 +396,7 @@ async function handle(
       tabId: sender.tab!.id,
       warnings:
         record.source === "syndication"
-          ? ["媒体信息来自公开嵌入接口，可能不完整"]
+          ? [t("warnSyndicationPartial")]
           : [],
     };
     jobs.set(job.id, job);
@@ -411,10 +412,10 @@ async function handle(
   if (m.type === "CANCEL" || m.type === "RETRY") {
     const job = jobs.get(m.id);
     if (!job || (fromContent && job.tabId !== sender.tab!.id))
-      return { ok: false, error: "未找到该任务" };
+      return { ok: false, error: t("errJobNotFound") };
     if (m.type === "CANCEL") {
       if (!ACTIVE.has(job.state)) return { ok: true };
-      await patch(job, { state: "cancelled", error: "已取消" });
+      await patch(job, { state: "cancelled", error: t("errCancelled") });
       if ((await contexts()).length)
         await offscreen({ type: "CANCEL", id: job.id });
       if (job.downloadId !== undefined)
@@ -426,7 +427,7 @@ async function handle(
       ? await offscreen({ type: "STATUS" })
       : { ids: [] };
     if (live.ids?.includes(job.id))
-      return { ok: false, error: "正在清理上一次任务，请稍后重试" };
+      return { ok: false, error: t("errCleanupRetry") };
     await patch(job, {
       state: "queued",
       error: undefined,
@@ -436,7 +437,7 @@ async function handle(
       progress: 0,
       warnings:
         job.record.source === "syndication"
-          ? ["媒体信息来自公开嵌入接口，可能不完整"]
+          ? [t("warnSyndicationPartial")]
           : [],
     });
     await ensureOffscreen();
@@ -447,7 +448,7 @@ async function handle(
     });
     return { ok: true, job };
   }
-  return { ok: false, error: "未知操作" };
+  return { ok: false, error: t("errUnknownAction") };
 }
 chrome.runtime.onMessage.addListener((m, sender, reply) => {
   if (m?.target === "offscreen") return;
@@ -476,7 +477,7 @@ chrome.downloads.onChanged.addListener((delta) => {
       await chrome.downloads.cancel(delta.id).catch(() => {});
       await patch(job, {
         state: "failed",
-        error: "Chrome 下载被重定向到未授权地址",
+        error: t("errRedirectBlocked"),
       });
       if ((await contexts()).length)
         await offscreen({ type: "CANCEL", id: job.id });

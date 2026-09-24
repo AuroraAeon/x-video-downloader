@@ -1,6 +1,76 @@
 # 验证记录
 
-日期：2026-09-24（Asia/Shanghai）。当前扩展版本 **1.2.1**。
+日期：2026-09-24（Asia/Shanghai）。当前扩展版本 **1.3.0**。
+
+## 1.3.0 验证
+
+### 本地化门禁
+
+- `tsc --noEmit` 通过；90 项单元测试通过（11 个文件）。新增 `tests/i18n.test.ts` 6 项：两份目录键集与参数数量一致、每条消息的替换实参都声明了 `placeholders`、英文目录不残留中日韩字符、每个键都被源码或清单引用、清单 `__MSG_` 在两种语言下都存在且不超过 132 字符、缺参时保留占位符原文而不伪造文案。
+- 单元层的界面语言由 `tests/setup.ts` 固定为 `en-US`：Node 的 `navigator.language` 返回主机 ICU 区域（本机为 zh-CN），否则同一份代码在中文 Windows 与英文 CI 上会得到不同结论。
+- 26 项完整 MV3 浏览器业务场景通过，`errors` 为空；布局与语言场景由 8 项增至 9 项并通过，新增的 `locale-zh-CN` 场景启动第二个真实浏览器实例，读取中文界面下信息栏的 `aria-label`，同时要求英文实例的文本不含中日韩字符。两套浏览器套件都固定 `locale: "en-US"`。
+
+### 打包与可复现
+
+- `pnpm exec node scripts/check-package.mjs` 通过：`release/x-video-downloader-1.3.0.zip` 含 19 个文件、237,338 字节、SHA-256 `ee4f84b0c018dd975a66d293c0af3517027a6463f4d59f0a235b2eddc70374be`。归档内确认存在 `_locales/en/messages.json`（9,227 字节）与 `_locales/zh_CN/messages.json`（8,789 字节），清单 1,208 字节通过 `__MSG_` 引用两者。
+- 同一份源码连续三次 `pnpm build` + `pnpm package` 得到同一 SHA-256，确认可复现。
+- 负向门禁实测退出码 1：向 `en` 目录注入未声明的替换实参并重新打包后，门禁报 `en errHttpStatus uses an undeclared substitution`。还原源码并重建后哈希回到与注入前一致的值。
+
+### 假设否证
+
+- 本轮曾把故障归因为"未声明 `placeholders` 会让 Chrome 拒绝加载整个扩展"。**该结论不成立**，已实测否证：复制同一份 `dist` 五份，分别注入清单引用消息（`extensionDescription`）与运行时消息（`labelUnavailable`）的 `$1` 和 `$NOTHING` 形态，Chrome for Testing 每次都照常注册后台 service worker（`chrome-extension://<id>/background.js`）。
+- 站得住的机制是 `chrome.i18n.getMessage` 对未声明占位符返回残缺文本（实测 `$LABEL` 被读成 `ABEL`），从而污染清单文案与页面文本；`docs/webstore/images` 与 `api/i18n` 页面都没有"加载失败"的描述。AGENTS.md、README、CHANGELOG、发布说明与两处代码注释已按此改写，门禁保留——约束本身仍然成立。
+- 复现方式：复制 `dist`，改 `_locales/en/messages.json`，用 `--load-extension` 加载并监听 `serviceworker` 事件。探针脚本留在 `output/`（不入库）。
+- 端到端套件的文案断言改为按两份目录共同接受任一语言：离屏媒体 Worker 里没有 `chrome.i18n`，其 `navigator.language` 仍取自主机，因此固定 `--lang` 不能决定那一层的文本；严格的双语校验由单元与布局套件承担。
+
+### 发布链路
+
+- `scripts/store-publish.mjs`：`--help` 与 `release`、`webstore-upload`、`webstore-publish`、`webstore-list`、`edge-package` 全部在缺少凭据时自动 dry-run，打印完整计划调用（密钥与未设置项 redacted）并以 0 退出，未发出任何网络请求；上传类命令先按 `release/SHA256SUMS.txt` 校验归档哈希与版本。
+- 修复该脚本一处真实缺陷：发布说明未提及当前版本时，`die()` 抛出的错误被"文件不存在"的分支吞掉，命令静默改用生成文案。现在读取与校验分离，缺文件走 fallback，内容不符则失败退出。
+- `ci.yml`、`pages.yml`、`release.yml` 三个工作流均通过 YAML 解析；`release.yml` 的 `verify` 作业与 `ci.yml` 步骤逐条一致，商店作业由 `environment: chrome-webstore`、fork 判定和凭据存在性输出三重门控，未配置凭据时只做 dry-run，发布目标为空则停在草稿不发布。
+
+### 商店素材
+
+- 新增 `scripts/store-assets.mjs`（`pnpm assets`），用打包后的 `dist` 构建在本机渲染素材，输出 8 个 PNG 到 `docs/site/assets/`：`shot-en.png`/`shot-en-menu.png`/`shot-zh.png`/`shot-zh-menu.png` 为 1280×800（66,865 / 79,044 / 66,991 / 78,246 字节），`tile-en.png`/`tile-zh.png` 为 440×280（9,550 / 9,224 字节），`marquee-en.png`/`marquee-zh.png` 为 1400×560（35,478 / 33,351 字节）。规格取自 [Supplying Images](https://developer.chrome.com/docs/webstore/images)：截图 1–5 张、必须 1280×800 或 640×400，440×280 小促销图为必填，1400×560 大图为可选。
+- 素材由脚本断言而非人工目测：截图经 `sharp` 复核实际像素尺寸必须等于目标尺寸；信息栏必须包含当前语言目录里的"最高画质"字样并匹配 `640 × 360`；下载菜单在闭合 shadow root 内读不到文本，因此改为校验几何（宽 > 100、高 > 60）。
+- 拦截方式记录：`context.route()` 不拦截 service worker 内的探测，因此脚本起本机 HTTPS 服务（自签 `video.twimg.com`）并用 `--host-resolver-rules=MAP video.twimg.com 127.0.0.1:<port>` 加 `--ignore-certificate-errors`、`--no-proxy-server` 让真实媒体源指向本地。
+- 双语产品页新增截图区（`#gallery`），正文与图注都写明图片来自本机测试样例（色条短片、`@fixture` 账号）而非真实登录时间线，并给出重生成命令；站点在本地以 `file://` 与 http 服务两种方式和两种语言渲染，无断图。截图区三张图都带 `loading="lazy" decoding="async"`（首屏以下，不需要提优先级），宽高属性与真实像素一致，避免布局位移。
+
+### 站点可发现性
+
+- 两个产品页新增完整分享与结构化元数据：`og:*`（含 `og:image` 1280×800 与 `og:locale`）、`twitter:card=summary_large_image`、以及 `@type: SoftwareApplication` 的 JSON-LD（`softwareVersion` 取当前版本、`offers.price` 为 `"0"`、`license` MIT、`codeRepository` 指向真实仓库、`featureList` 五项全部是仓库已记录的行为）。**没有** `downloadUrl`：商店条目尚未创建，写一个不存在的下载链接就是虚假声明。
+- 四个页面的 `hreflang` 改为绝对 URL 并补齐 `en` / `zh-Hans` / `x-default` 三向声明，产品页与隐私页各自成组互指；新增 `docs/site/sitemap.xml`（4 条 `<loc>`，双语交替用 `xhtml:link`，并声明 `xmlns:xhtml`，否则 XML 解析直接失败）与 `docs/site/robots.txt`（`Sitemap:` 指向绝对地址）。
+- 这些事实由 `tests/site.test.ts` 6 项常驻门禁检查（CI 已跑 `pnpm test`）：内部链接与 `content=` 里的绝对分享 URL 必须对应仓库内真实文件；标签为“Version/版本”的版本号必须等于 `package.json`；`hreflang` 组必须绝对化且成对互指；JSON-LD 必须可 `JSON.parse` 且版本与包一致；sitemap 两个命名空间与 `<loc>` 落盘一致；素材 PNG 尺寸必须等于 1280×800 / 440×280 / 1400×560。
+- 负向验证逐条实测（7 个注入场景，脚本 `output/site-gate-negative.mjs`，不入库）：结构化数据版本改成 9.9.9 → JSON-LD 用例失败；`hreflang` 改回相对 → 互指用例失败；`og:image` 指向缺失文件 → 链接用例失败；中文页写 1.2.1 → 版本用例失败；删掉 `xmlns:xhtml` → sitemap 用例失败；`robots.txt` 的 `Sitemap:` 改成相对 → 同一用例失败；把 1280×800 截图塞进 `tile-en.png` → 尺寸用例失败。每轮后按 SHA-256 前缀比对确认四个 HTML、sitemap、robots 与两张 PNG 全部还原，还原后套件重新全绿。
+- 一处真实教训：`og:image` 指向缺失文件最初**没有**被门禁拒绝——门禁只查 `src`/`href`，不查 `content=` 里的绝对 URL。补上该分支后重跑注入场景才被拒。
+
+### 隐私声明与权限一致性
+
+- 商店"数据隐私"表与实际权限不一致是常见被拒原因，因此新增 `tests/privacy-claims.test.ts` 4 项，把政策文案与 `public/manifest.json` 机械对齐：两份隐私政策正文（去掉标签后的文字）出现的 `https://主机` 必须**恰好**等于清单 `host_permissions` 去掉 `/*` 后的三条（`x.com`、`video.twimg.com`、`cdn.syndication.twimg.com`），中英文两页还须互相一致；两个产品页正文出现的外部主机只能来自"已授权主机 ∪ 自有站点/仓库/许可证/schema.org"这个封闭集合；产品页"权限/Permission"表格第一列的 `<code>` 标记必须与清单的 `permissions` + `host_permissions` 一一对应（不多不少）。
+- 负向验证（`output/privacy-gate-negative.mjs`，5 个注入场景，不入库）：政策里把某个已授权主机换成 `analytics.example.com` → 前两条用例失败；产品页正文加入 `sponsor.example.com` → 封闭集合用例失败；清单加入 `cookies` 权限而表格未更新 → 权限表用例失败；中文政策改掉一个 CDN 主机 → 一致性用例失败；把表格里的 `downloads` 换成 `cookies`（页面声称拥有但清单没有）→ 同一用例失败。每轮结束按 SHA-256 前缀确认四个 HTML 与 `public/manifest.json` 均已还原，还原后套件重新全绿。
+- 两处**最初写成、后来被否证**的假门禁，记录以免重犯：
+  - "政策正文里出现权限名即算已说明"——只要用 `text.includes("cookies")` 这类子串判断，页面里"我们绝不读取 Cookie"这句话就会让"清单新增了 cookies 权限"这种真实漂移蒙混过关（实测四个页面都含 `<code>cookies</code>`，注入后 4 项全绿）。改为只读权限表格第一列的 `<code>` 标记，并加入"表格不得声称清单里没有的权限"的反向断言后才被拒。
+  - 负向脚本自身的 `ran` 探针最初用 `describe` 名（"privacy claims"）判断套件是否真的跑过；通过时 vitest 只打印文件路径，导致"没跑"被误判为"跑了"。改用文件名 `privacy-claims.test.ts` 判断。
+- 修文案而非放松断言：中文隐私政策原先写"离屏文档"而未点名 API，因此补成 `离屏文档（<code>offscreen</code>）`，英文政策同样把 `offscreen` 标成代码，使政策与用户安装时看到的权限提示用词一致。
+
+### 贡献入口与仓库首页
+
+- 新增 `CONTRIBUTING.md`（把 AGENTS.md 的硬约束翻成九条门禁命令与七条不变量）、`SECURITY.md`（扩展能接触与不能接触什么、`release/SHA256SUMS.txt` 核对方式、私密上报退路）和 `.github/ISSUE_TEMPLATE/` 三个表单（bug、feature、config）。结构与仓库首页事实由 `tests/community.test.ts` 13 项常驻门禁校验：字段类型只能取 GitHub 真正渲染的五种（写成别的类型会让整张表单从 New issue 页面静默消失）、每个字段有唯一 `id` 且有标签、两个确认项都必须 `required: true`、`config.yml` 必须关闭空白 issue 且两个 contact 链接指向仓库内真实存在的页面、两份 README 相对链接不得失效、两份 README 互指、权限表必须与清单 `permissions` + `host_permissions` 完全相等、"当前版本"与 ZIP 文件名版本必须等于 `package.json`、且必须写明"商店尚未上架"而不得出现"审核中/已上架"。仓库无 YAML 解析依赖，因此门禁按行解析；一次性 Python 校验器（`output/issue-forms-check.py`）保留作交叉核对，注入非法 `type: textfield` 时它退出 1。
+- 新增 `README.en.md`：仓库首页此前只有中文，而扩展界面与项目主页都提供英文版，英文读者无法在 GitHub 上判断这个扩展做什么。英文页逐段对应中文页，不新增任何能力、速度或用户量声明；两份首页互相链接，并由同一批门禁（链接、版本、权限表、商店状态）同时检查，改一边就会被拒。
+- 负向验证逐条实测（18 个注入场景，脚本 `output/community-gate-negative.mjs`，不入库）：`checkboxes` 改成 `textfield` → 类型用例与确认项用例同时失败；删掉一个字段 `id` → id 用例失败；把某个确认项改成 `required: false` → 确认项用例失败；删掉"不要粘贴 Cookie/authorization/token"警告 → 告费用例失败；`blank_issues_enabled` 改成 `true`、contact 链接指向不存在的页面 → config 用例失败；中文首页版本写 1.2.1、英文首页 `Current version` 写 1.2.1 → 版本用例失败；把"商店尚未上架"改回"审核中"、英文首页改写为 "The Chrome Web Store listing is in review." → 商店状态用例失败；`docs/stores.md` 链接改错（两份首页各测一次）→ 链接用例失败；删掉中英互指链接 → 互指用例失败；删掉指向 CONTRIBUTING/SECURITY 的链接（两份各一次）→ 入口用例失败；从权限表删掉一条已授权主机（中英各一次）、或把 `downloads` 写成 `cookies` → 权限表用例失败。每轮后按 SHA-256 前缀确认四个文件字节还原，还原后 13 项重新全绿。
+- 两处**由门禁检查暴露出的真实虚假声明**，不是测试问题而是文案问题：
+  - `README.md` 原本写"商店版本审核中"，而 `docs/distribution.md` 第 0 节记录的是"待提交"——从未向任何商店提交过，这句话描述了一个不存在的外部状态，对审核方和用户都是误导。改为"商店尚未上架……注册与提交步骤见 docs/stores.md"，并加入"首页不得出现审核中/已上架"的门禁与对应注入场景。`docs/distribution.md` 里的公告草稿有同一处错误（"目前商店审核中"），一并改为"商店条目尚未提交"。
+  - 英文 bug 表单原本让报告者去读 README 里的 "what is not supported" 清单，但 README 只有中文 `行为与边界` 一节，英文页面上不存在该标题。改为指名实际章节（`README.md` 的 `行为与边界`）。
+- 一处**最初写成、后来被否证**的假门禁，记录以免重犯：确认项用例最初只比较全文 `required: true` 次数与 `validations:` 次数（`8 >= 6` 恒成立），删掉某个复选项的 `required: true` 仍然通过（`7 >= 6`）。改为按缩进分别统计复选项数与其 `required: true` 数、要求两者相等之后，该注入才被拒。
+- 外部现状改为实测而非推测（2026-09-24）：`gh repo view` 显示仓库存在、描述已是英文，但 `repositoryTopics` 与 `homepageUrl` 均未设置、Discussions 关闭；直接请求 `https://auroraeon.github.io/x-video-downloader/`、`/privacy.html`、`/sitemap.xml` 都返回 404，确认 Pages 尚未部署。`docs/distribution.md` 第 0 节新增"GitHub 仓库元数据"行，第 4 节按实测状态重写（并修正了原来的重复编号），附上设置 topics 与主页链接的 `gh repo edit` 命令。
+- 三处**由自查发现并已修正的文案不准**：`README.md` 与 `docs/distribution.md` 草稿都把商店写成"审核中"（实际从未提交）；英文 bug 表单引用了 README 中不存在的英文小标题；`CHANGELOG.md`、`docs/validation.md` 与发布说明把 CONTRIBUTING 的不变量条数写成六条（实际七条，`grep -c '^- \*\*'` 核对）。前两类现在各有门禁，条数类属于一次性笔误，已逐处改正。
+
+### 本轮未实测
+
+- 没有向 Chrome Web Store 或 Edge Add-ons 提交任何内容：注册、条目创建、素材上传和最终提交按钮都属于账号所有者的手工步骤，见 `docs/distribution.md` 第 4 节。
+- GitHub Pages 尚未启用，`docs/site` 与双语隐私政策目前只是仓库内文件；商店表单要求一个公开可访问的隐私政策 URL，因此上架前必须先开启。
+- 素材已生成但未上传到任何商店表单，也没有人工确认过商店审核方是否接受"渲染本机测试样例"的截图；如需以真实 X 页面截图提交，需要账号所有者用自己的登录态另行截取，本机样例是为了不把个人时间线送进仓库和商店素材。
+- 真实 X 页面的 `test:live`、`test:live-hls`、`test:source` 未运行，原因与 1.2.1 相同：需要外网与真实登录态，不能用本机样例代替。
 
 ## 1.2.1 验证
 

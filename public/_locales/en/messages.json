@@ -1,0 +1,396 @@
+{
+  "extensionName": {
+    "message": "X Video Downloader"
+  },
+  "extensionDescription": {
+    "message": "Download the best available X video or audio, with inline quality details and lossless HLS processing."
+  },
+  "menuTooltip": {
+    "message": "Download video or audio"
+  },
+  "menuVideoTitle": {
+    "message": "Download best video quality"
+  },
+  "menuAudioTitle": {
+    "message": "Download best audio quality"
+  },
+  "labelVideoBest": {
+    "message": "Best video"
+  },
+  "labelVideoKnown": {
+    "message": "Known video"
+  },
+  "labelVideoAvailable": {
+    "message": "Available video"
+  },
+  "labelAudioBest": {
+    "message": "Best audio"
+  },
+  "labelAudioKnown": {
+    "message": "Known audio"
+  },
+  "labelAudioAvailable": {
+    "message": "Available audio"
+  },
+  "labelNoAudio": {
+    "message": "No audio track"
+  },
+  "labelUnavailable": {
+    "message": "Unavailable"
+  },
+  "labelChecking": {
+    "message": "Checking…"
+  },
+  "valueLine": {
+    "message": "$LABEL: $VALUE",
+    "placeholders": {
+      "LABEL": {
+        "content": "$1"
+      },
+      "VALUE": {
+        "content": "$2"
+      }
+    }
+  },
+  "suffixConfirming": {
+    "message": " · confirming"
+  },
+  "suffixLimited": {
+    "message": " · limited or downgraded"
+  },
+  "statusPreparing": {
+    "message": "Preparing download…"
+  },
+  "jobStatus": {
+    "message": "$MODE · $STATE",
+    "placeholders": {
+      "MODE": {
+        "content": "$1"
+      },
+      "STATE": {
+        "content": "$2"
+      }
+    }
+  },
+  "jobStatusCandidate": {
+    "message": "$STATE · $CANDIDATE",
+    "placeholders": {
+      "STATE": {
+        "content": "$1"
+      },
+      "CANDIDATE": {
+        "content": "$2"
+      }
+    }
+  },
+  "modeVideo": {
+    "message": "Video"
+  },
+  "modeAudio": {
+    "message": "Audio"
+  },
+  "stateQueued": {
+    "message": "Queued"
+  },
+  "stateAnalyzing": {
+    "message": "Checking"
+  },
+  "stateWaiting": {
+    "message": "Waiting to process"
+  },
+  "stateMerging": {
+    "message": "Processing"
+  },
+  "stateSaving": {
+    "message": "Downloading"
+  },
+  "stateComplete": {
+    "message": "Downloaded"
+  },
+  "stateFailed": {
+    "message": "Download failed"
+  },
+  "stateCancelled": {
+    "message": "Cancelled"
+  },
+  "stateInterrupted": {
+    "message": "Interrupted"
+  },
+  "actionCancel": {
+    "message": "Cancel"
+  },
+  "actionRetry": {
+    "message": "Retry"
+  },
+  "popupEmpty": {
+    "message": "No downloads yet"
+  },
+  "popupSummary": {
+    "message": "$ACTIVE active · $DONE completed",
+    "placeholders": {
+      "ACTIVE": {
+        "content": "$1"
+      },
+      "DONE": {
+        "content": "$2"
+      }
+    }
+  },
+  "popupClearTitle": {
+    "message": "Clear finished tasks"
+  },
+  "popupDownloadsTitle": {
+    "message": "Open Chrome downloads"
+  },
+  "menuJobHeading": {
+    "message": "Task queue"
+  },
+  "errUntrustedSender": {
+    "message": "Message source is not trusted"
+  },
+  "errStartFromButton": {
+    "message": "Start the download from the button next to the video"
+  },
+  "errInvalidMetadata": {
+    "message": "Media metadata is invalid"
+  },
+  "errInvalidVideoMetadata": {
+    "message": "Video metadata is invalid"
+  },
+  "errInvalidPostId": {
+    "message": "Post ID is invalid"
+  },
+  "errInvalidMode": {
+    "message": "Download type is invalid"
+  },
+  "errTaskFinished": {
+    "message": "This task has already finished"
+  },
+  "errJobNotFound": {
+    "message": "Task not found"
+  },
+  "errUnknownAction": {
+    "message": "Unknown action"
+  },
+  "errQueueFull": {
+    "message": "Download queue is full; wait for a running task to finish"
+  },
+  "errBusyInspecting": {
+    "message": "Another video is being inspected"
+  },
+  "errCleanupRetry": {
+    "message": "Cleaning up the previous task; try again shortly"
+  },
+  "errUrlValidation": {
+    "message": "Media address failed validation"
+  },
+  "errRedirectBlocked": {
+    "message": "Chrome redirected the download to an unapproved address"
+  },
+  "errRestarted": {
+    "message": "The browser or media environment restarted; try again"
+  },
+  "errInterrupted": {
+    "message": "Download interrupted"
+  },
+  "errCancelled": {
+    "message": "Cancelled"
+  },
+  "errNotStarted": {
+    "message": "Chrome could not start the download"
+  },
+  "errMediaTimeout": {
+    "message": "Media processing timed out; try again"
+  },
+  "errWorkerExited": {
+    "message": "The media worker exited unexpectedly"
+  },
+  "errNoAudioTrack": {
+    "message": "This video has no downloadable audio track"
+  },
+  "errNoVideoTrack": {
+    "message": "No downloadable video track"
+  },
+  "errNoDownloadableVideo": {
+    "message": "No downloadable video track found"
+  },
+  "errAllCandidatesFailed": {
+    "message": "Every quality candidate failed"
+  },
+  "errLiveAudio": {
+    "message": "Live audio tracks cannot be downloaded"
+  },
+  "errLiveMedia": {
+    "message": "Live media cannot be downloaded"
+  },
+  "errNoAudioData": {
+    "message": "The audio track has no readable data"
+  },
+  "errNoResolution": {
+    "message": "Video resolution could not be confirmed"
+  },
+  "errMissingPairedTrack": {
+    "message": "The selected video lacks a paired track"
+  },
+  "errMuxFailed": {
+    "message": "The selected tracks could not be muxed into MP4 losslessly"
+  },
+  "errEmptyMux": {
+    "message": "The merged result is empty"
+  },
+  "errVerifyVideo": {
+    "message": "The merged file failed video or track verification"
+  },
+  "errVerifyAudio": {
+    "message": "The audio file failed codec or track verification"
+  },
+  "errQuota": {
+    "message": "Not enough free disk space is available"
+  },
+  "errDiskQuota": {
+    "message": "The browser disk quota is exhausted"
+  },
+  "errPlanChanged": {
+    "message": "The media manifest changed; try again"
+  },
+  "errUnsafeUrl": {
+    "message": "Media address is outside the allowed range"
+  },
+  "errTimeout": {
+    "message": "Media request timed out"
+  },
+  "errRateLimited": {
+    "message": "X media service is rate limiting; retry later"
+  },
+  "errHttpStatus": {
+    "message": "Media service returned HTTP $STATUS",
+    "placeholders": {
+      "STATUS": {
+        "content": "$1"
+      }
+    }
+  },
+  "errRedirectRejected": {
+    "message": "Media redirect was rejected"
+  },
+  "errNotVideo": {
+    "message": "Media service returned non-video content"
+  },
+  "errPlaylistInvalid": {
+    "message": "The HLS playlist is invalid"
+  },
+  "errEncrypted": {
+    "message": "This HLS stream is encrypted and cannot be downloaded losslessly"
+  },
+  "errEmptyResponse": {
+    "message": "Media response was empty"
+  },
+  "errNetwork": {
+    "message": "Media network request failed"
+  },
+  "errTooLarge": {
+    "message": "Response too large; parsing stopped"
+  },
+  "errReadCancelled": {
+    "message": "Response reading was cancelled"
+  },
+  "errRangeInvalid": {
+    "message": "Media Range response is invalid"
+  },
+  "errResponseIncomplete": {
+    "message": "Media response is incomplete"
+  },
+  "errProbeBudget": {
+    "message": "Header inspection exceeded its read budget"
+  },
+  "errNoRangeRead": {
+    "message": "The server did not offer a bounded Range read"
+  },
+  "errEmptyProbeResponse": {
+    "message": "Empty media probe response"
+  },
+  "errProbeTooLarge": {
+    "message": "Media probe response is too large"
+  },
+  "errQualityUnavailable": {
+    "message": "Media details are unavailable"
+  },
+  "errPostUnknown": {
+    "message": "The owning post could not be confirmed; open the post and retry"
+  },
+  "errHttpLogin": {
+    "message": "X returned HTTP $STATUS; sign in or retry shortly",
+    "placeholders": {
+      "STATUS": {
+        "content": "$1"
+      }
+    }
+  },
+  "errNoMetadata": {
+    "message": "Video metadata is not available yet; refresh or open the post"
+  },
+  "errVideoSwitched": {
+    "message": "The video changed; try again"
+  },
+  "errCannotStart": {
+    "message": "The download could not start"
+  },
+  "errSyndicationHttp": {
+    "message": "X public embed endpoint returned HTTP $STATUS",
+    "placeholders": {
+      "STATUS": {
+        "content": "$1"
+      }
+    }
+  },
+  "warnSyndicationPartial": {
+    "message": "Media details came from the public embed endpoint and may be incomplete"
+  },
+  "warnSyndicationMissing": {
+    "message": "The public embed endpoint may be missing some media versions"
+  },
+  "warnAutoFallback": {
+    "message": "Fell back to $CANDIDATE: $DETAIL",
+    "placeholders": {
+      "CANDIDATE": {
+        "content": "$1"
+      },
+      "DETAIL": {
+        "content": "$2"
+      }
+    }
+  },
+  "warnTrackUncheckable": {
+    "message": "Audio track could not be inspected: $DETAIL",
+    "placeholders": {
+      "DETAIL": {
+        "content": "$1"
+      }
+    }
+  },
+  "warnVariantUnparsed": {
+    "message": "A $KIND version could not be parsed: $DETAIL",
+    "placeholders": {
+      "KIND": {
+        "content": "$1"
+      },
+      "DETAIL": {
+        "content": "$2"
+      }
+    }
+  },
+  "warnCandidateUnavailable": {
+    "message": "$KIND candidate unavailable: $DETAIL",
+    "placeholders": {
+      "KIND": {
+        "content": "$1"
+      },
+      "DETAIL": {
+        "content": "$2"
+      }
+    }
+  },
+  "warnExcludedUnpaired": {
+    "message": "Excluded versions without a paired audio track"
+  }
+}

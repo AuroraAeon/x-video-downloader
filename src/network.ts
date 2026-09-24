@@ -1,3 +1,4 @@
+import { t } from "./i18n";
 import { boundedText, mediaUrl } from "./security";
 
 export class DownloadError extends Error {
@@ -19,7 +20,7 @@ export function createMediaFetch(
   return async (input, init) => {
     const url = mediaUrl(input instanceof Request ? input.url : String(input));
     if (!url)
-      throw new DownloadError("UNSAFE_URL", "媒体地址不在允许范围内", true);
+      throw new DownloadError("UNSAFE_URL", t("errUnsafeUrl"), true);
     const headers = new Headers();
     const range = new Headers(init?.headers).get("range");
     if (range) headers.set("range", range);
@@ -31,7 +32,7 @@ export function createMediaFetch(
       const refresh = () => {
         clearTimeout(timer);
         timer = setTimeout(
-          () => timeout.abort(new DownloadError("TIMEOUT", "媒体请求超时")),
+          () => timeout.abort(new DownloadError("TIMEOUT", t("errTimeout"))),
           options.timeoutMs ?? 20000,
         );
       };
@@ -54,24 +55,24 @@ export function createMediaFetch(
         if (response.status === 429)
           throw new DownloadError(
             "RATE_LIMIT",
-            "X 媒体服务限流，请稍后重试",
+            t("errRateLimited"),
             true,
           );
         if (!response.ok)
           throw new DownloadError(
             String(response.status),
-            `媒体服务返回 HTTP ${response.status}`,
+            t("errHttpStatus", response.status),
           );
         if (response.url && !mediaUrl(response.url))
-          throw new DownloadError("UNSAFE_REDIRECT", "媒体重定向被拒绝", true);
+          throw new DownloadError("UNSAFE_REDIRECT", t("errRedirectRejected"), true);
         const mime = response.headers.get("content-type") ?? "";
         if (/text\/html|application\/json/i.test(mime))
-          throw new DownloadError("BAD_MEDIA", "媒体服务返回了非视频内容");
+          throw new DownloadError("BAD_MEDIA", t("errNotVideo"));
         if (new URL(url).pathname.endsWith(".m3u8")) {
           const text = await boundedText(response, 1024 * 1024, signal);
           clearTimeout(timer!);
           if (!text.trimStart().startsWith("#EXTM3U"))
-            throw new DownloadError("BAD_PLAYLIST", "HLS 清单无效");
+            throw new DownloadError("BAD_PLAYLIST", t("errPlaylistInvalid"));
           if (
             /#EXT-X-(?:SESSION-)?KEY:[^\r\n]*METHOD=(?!NONE(?:,|\s|$))/i.test(
               text,
@@ -79,7 +80,7 @@ export function createMediaFetch(
           )
             throw new DownloadError(
               "ENCRYPTED",
-              "该 HLS 使用加密，不支持无损下载",
+              t("errEncrypted"),
             );
           return new Response(text, {
             status: response.status,
@@ -89,7 +90,7 @@ export function createMediaFetch(
         const reader = response.body?.getReader();
         if (!reader) {
           clearTimeout(timer!);
-          throw new DownloadError("EMPTY", "媒体响应为空");
+          throw new DownloadError("EMPTY", t("errEmptyResponse"));
         }
         return new Response(
           new ReadableStream({
@@ -129,6 +130,6 @@ export function createMediaFetch(
         await sleep([600, 1800][attempt]!);
       }
     }
-    throw new DownloadError("NETWORK", "媒体网络请求失败");
+    throw new DownloadError("NETWORK", t("errNetwork"));
   };
 }

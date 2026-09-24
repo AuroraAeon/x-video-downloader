@@ -9,6 +9,7 @@ const context = await chromium.launchPersistentContext("", {
   channel: process.env.XVD_CHROME ? undefined : "chromium",
   executablePath: process.env.XVD_CHROME,
   headless: true,
+  locale: "en-US",
   args: [
     `--disable-extensions-except=${path.resolve("dist")}`,
     `--load-extension=${path.resolve("dist")}`,
@@ -137,6 +138,42 @@ try {
     };
   });
   await verify("revealed-player");
+  // Store reviewers and most users only ever see the rendered locale, so a
+  // second browser instance with a Chinese UI language proves the bundled
+  // catalogues reach a real content script rather than only the unit tests.
+  const zh = await chromium.launchPersistentContext("", {
+    channel: process.env.XVD_CHROME ? undefined : "chromium",
+    executablePath: process.env.XVD_CHROME,
+    headless: true,
+    locale: "zh-CN",
+    args: [
+      `--disable-extensions-except=${path.resolve("dist")}`,
+      `--load-extension=${path.resolve("dist")}`,
+    ],
+  });
+  try {
+    await zh.route("https://pbs.twimg.com/**", async (r) =>
+      r.fulfill({
+        contentType: "image/png",
+        body: await readFile("output/fixtures/poster.png"),
+      }),
+    );
+    await zh.route("https://x.com/**", (r) =>
+      r.fulfill({ contentType: "text/html", body: fixture("flow") }),
+    );
+    const zhPage = await zh.newPage();
+    await zhPage.goto("https://x.com/test/status/123");
+    await zhPage.waitForSelector("xvd-quality");
+    const englishAria = await page.getAttribute("xvd-quality", "aria-label");
+    const chineseAria = await zhPage.getAttribute("xvd-quality", "aria-label");
+    const cjk = /[\u3000-\u303f\u4e00-\u9fff\uff00-\uffef]/;
+    assert.ok(englishAria && /video/i.test(englishAria), `unexpected English strip text: ${englishAria}`);
+    assert.ok(!cjk.test(englishAria), `English locale still rendered CJK: ${englishAria}`);
+    assert.match(chineseAria, /画质/);
+    results.push({ label: "locale-zh-CN", ariaLabel: chineseAria });
+  } finally {
+    await zh.close();
+  }
   console.log(
     JSON.stringify(
       { passed: results.length, scenarios: results.map((r) => r.label) },

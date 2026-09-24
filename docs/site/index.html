@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>X Video Downloader — Chrome MV3 extension for X videos</title>
+    <meta
+      name="description"
+      content="X Video Downloader is an independent Manifest V3 Chrome extension (Chrome 116+) that downloads the best available video (MP4) or lossless audio (M4A) from an X post, with resolution, frame rate, bitrate and sample rate shown under the player before you download. No backend, no API key, no telemetry."
+    />
+    <link
+      rel="stylesheet"
+      href="styles.css"
+    />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href="https://auroraeon.github.io/x-video-downloader/"
+    />
+    <link
+      rel="alternate"
+      hreflang="zh-Hans"
+      href="https://auroraeon.github.io/x-video-downloader/zh.html"
+    />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://auroraeon.github.io/x-video-downloader/"
+    />
+    <link rel="canonical" href="https://auroraeon.github.io/x-video-downloader/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="X Video Downloader" />
+    <meta
+      property="og:title"
+      content="X Video Downloader — best available quality, shown before you download"
+    />
+    <meta
+      property="og:description"
+      content="Independent Manifest V3 browser extension: save the highest available video (MP4) or lossless audio (M4A) from an X post. No backend, no API key, no telemetry."
+    />
+    <meta
+      property="og:url"
+      content="https://auroraeon.github.io/x-video-downloader/"
+    />
+    <meta property="og:locale" content="en_US" />
+    <meta
+      property="og:image"
+      content="https://auroraeon.github.io/x-video-downloader/assets/shot-en.png"
+    />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="800" />
+    <meta
+      property="og:image:alt"
+      content="Post with the download button in the corner of the video and two quality lines under the player"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="X Video Downloader — Chrome MV3 extension for X videos"
+    />
+    <meta
+      name="twitter:description"
+      content="Save the highest available video (MP4) or lossless audio (M4A) from an X post, with the real quality shown under the player first."
+    />
+    <meta
+      name="twitter:image"
+      content="https://auroraeon.github.io/x-video-downloader/assets/shot-en.png"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "X Video Downloader",
+        "url": "https://auroraeon.github.io/x-video-downloader/",
+        "applicationCategory": "Utilities/Tools",
+        "applicationSubCategory": "Browser extension",
+        "softwareVersion": "1.3.0",
+        "datePublished": "2026-09-24",
+        "operatingSystem": "Chrome 116 or later, Edge 116 or later",
+        "browserRequirements": "Requires a Chromium browser with Manifest V3 support",
+        "inLanguage": "en",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "codeRepository": "https://github.com/AuroraAeon/x-video-downloader",
+        "sameAs": ["https://github.com/AuroraAeon/x-video-downloader"],
+        "screenshot":
+          "https://auroraeon.github.io/x-video-downloader/assets/shot-en.png",
+        "featureList": [
+          "Downloads the highest available video quality (MP4) from an X post",
+          "Lossless audio extraction to M4A, keeping codec, sample rate and channels",
+          "Resolution, frame rate, bitrate, sample rate and channels shown under the player before downloading",
+          "Interface in English and Simplified Chinese, following the browser UI language",
+          "No backend, no API key, no telemetry; all code ships inside the extension"
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="index.html"
+          >X Video Downloader<small>Version 1.3.0 · Manifest V3</small></a
+        >
+        <nav class="nav" aria-label="Page sections">
+          <a href="#features">What it does</a>
+          <a href="#gallery">Interface</a>
+          <a href="#quality">Quality &amp; audio</a>
+          <a href="#supported">Supported</a>
+          <a href="#install">Install</a>
+          <a href="#troubleshooting">Troubleshooting</a>
+          <a href="privacy.html">Privacy policy</a>
+        </nav>
+        <p class="lang-switch">
+          <span aria-current="page">English</span>
+          <span class="lang-divider" aria-hidden="true">/</span>
+          <a href="zh.html" hreflang="zh-Hans">简体中文</a>
+        </p>
+      </div>
+    </header>
+
+    <main id="top">
+      <div class="hero">
+        <div class="wrap">
+          <span class="eyebrow">
+            Independent browser extension — not affiliated with X Corp.</span
+          >
+          <h1>Get the best file X actually serves you</h1>
+          <p class="lede">
+            A small glass download button appears in the corner of an X post
+            video. Click it to take the highest available video as MP4, or the
+            highest-bitrate audio track as M4A. The exact quality numbers appear
+            under the player — before you download anything.
+          </p>
+          <ul class="badges">
+            <li>Manifest V3</li>
+            <li>Chrome 116+ / Edge 116+</li>
+            <li>No backend, no API key</li>
+            <li>No Python or FFmpeg needed at runtime</li>
+            <li>No telemetry, no analytics</li>
+            <li>Source on GitHub (MIT, original code)</li>
+          </ul>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#install">Install</a>
+            <a
+              class="btn btn-secondary"
+              href="https://github.com/AuroraAeon/x-video-downloader/releases/latest"
+              >Latest release</a
+            >
+            <a
+              class="btn btn-secondary"
+              href="privacy.html">Privacy policy</a
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <section id="features">
+          <h2>What it does</h2>
+          <div class="grid">
+            <article class="card">
+              <h3>Quality picker on the video</h3>
+              <p>
+                A 28&nbsp;px glass button with a 16&nbsp;px icon sits inside the
+                video corner. Clicking it opens a menu where you choose video or
+                audio. The menu supports keyboard selection, closes on
+                <code>Escape</code>, and closes when you click outside it.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Details before the download</h3>
+              <p>
+                Under the player, outside it in normal document flow, the
+                extension shows resolution and frame rate, plus audio codec,
+                estimated bitrate, sample rate and channel count. Nothing has to
+                be downloaded first to see them.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Task popup</h3>
+              <p>
+                The toolbar icon opens a popup listing tasks with the quality
+                actually obtained, any limitation or fallback reason, and
+                controls to cancel or retry. It can jump to Chrome&rsquo;s own
+                download page.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Files land in Chrome</h3>
+              <p>
+                Downloads go through the Chrome download manager, so the
+                destination follows your Chrome settings and stays under your
+                control. Names look like
+                <code>x_author_1001551623938805763_1_480x360.mp4</code>.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="gallery">
+          <h2>The interface</h2>
+          <div class="shots">
+            <figure>
+              <img
+                src="assets/shot-en.png"
+                width="1280"
+                height="800"
+                loading="lazy"
+                decoding="async"
+                alt="Post with the download button in the corner of the video and two quality lines under the player"
+              />
+              <figcaption>
+                The button sits inside the video corner; the lines under the
+                player report the inspected video and audio.
+              </figcaption>
+            </figure>
+            <figure>
+              <img
+                src="assets/shot-en-menu.png"
+                width="1280"
+                height="800"
+                loading="lazy"
+                decoding="async"
+                alt="Open menu offering a video download and an audio download with their measured parameters"
+              />
+              <figcaption>
+                One click opens the choice: highest video quality or highest
+                audio quality, each labelled with its measured parameters.
+              </figcaption>
+            </figure>
+            <figure>
+              <img
+                src="assets/shot-zh.png"
+                width="1280"
+                height="800"
+                loading="lazy"
+                decoding="async"
+                alt="The same build with a Simplified Chinese browser user interface"
+              />
+              <figcaption>
+                The same build with a Simplified Chinese browser language —
+                interface text follows the browser UI language.
+              </figcaption>
+            </figure>
+          </div>
+          <p>
+            These images are rendered by the packaged build against a local test
+            fixture: the colour-bar clip and the <code>@fixture</code> account
+            come from the automated suite, not from a real post. Regenerate them
+            with <code>node scripts/store-assets.mjs</code>.
+          </p>
+        </section>
+
+        <section id="quality">
+          <h2>Quality and audio behaviour</h2>
+          <h3>How &ldquo;highest&rdquo; is decided</h3>
+          <p>
+            &ldquo;Highest&rdquo; means the best version X serves and your
+            current access can reach — not the creator&rsquo;s original upload.
+            Video candidates are ranked by real pixel dimensions, frame rate and
+            bitrate within the same codec; a direct MP4 link wins inside the
+            same tier. The player&rsquo;s current setting, thumbnail size and
+            <code>original_info</code> are not treated as the downloadable
+            version.
+          </p>
+          <h3>Audio is compared per track and stays lossless</h3>
+          <p>
+            All available audio tracks are compared independently and ranked by
+            bitrate, sample rate and channel count. Audio is extracted from HLS
+            or MP4 <strong>losslessly into M4A</strong> — it is never
+            re-encoded to a lossy MP3, and a paired audio track is never
+            silently dropped. HLS is remuxed without re-encoding.
+          </p>
+          <p>
+            A leading <code>&asymp;</code> means the bitrate was estimated by
+            sampling codec packets, in <code>kb/s</code>, <code>kHz</code> and
+            <code>ch</code>. It is a measurement, not a subjective opinion about
+            how something sounds.
+          </p>
+          <h3>Inspection is bounded, cancellable, and honest about partial data</h3>
+          <ul>
+            <li>
+              Automatic inspection never creates a download file; it only reads
+              what is needed.
+            </li>
+            <li>
+              Two bounded probe queues prioritise videos currently in view.
+              Inspections that scroll away and are not used for a download are
+              cancelled.
+            </li>
+            <li>
+              At most four network requests run concurrently per media item;
+              32&nbsp;KiB <code>Range</code> reads fetch only the headers and
+              sample tables, never a prefetched video body.
+            </li>
+            <li>
+              Every candidate is still inspected, keeping the 96-packet audio
+              and 64-frame video measurement ranges.
+            </li>
+            <li>
+              While inspection is unfinished the strip reads
+              &ldquo;known&nbsp;&hellip; · confirming&rdquo;. A partial result is
+              <strong>never</strong> labelled as the confirmed highest quality;
+              only a completed pass promotes it.
+            </li>
+            <li>
+              A probe with no result for 45&nbsp;seconds is re-issued instead of
+              freezing on &ldquo;checking&rdquo;, and one probe channel stays
+              available even while two merges are running.
+            </li>
+          </ul>
+          <h3>Throughput limits you may notice</h3>
+              <p>
+            At most two download tasks run at once, with only one media merge or
+            audio extraction in progress, and up to 20 tasks can queue. Video
+            and audio requests for the same video are de-duplicated separately.
+            Temporary media is held in OPFS so memory stays bounded, and Chrome
+            deletes the temp files once the save completes. If a candidate fails
+            the task can fall back automatically and says so; cancel, disk and
+            rate-limit errors stop the task instead of retrying forever.
+          </p>
+          <div class="panel">
+            <h3 style="margin-top: 0">Session cache</h3>
+            <p>
+              Display summaries are reused for 15 minutes and download
+              candidates for 2 minutes inside the browser session — service
+              worker sleep and offscreen document close do not clear them. A
+              changed signed URL invalidates the entry. Nothing is cached across
+              browser sessions and no credentials are stored.
+            </p>
+          </div>
+        </section>
+
+        <section id="supported">
+          <h2>Supported and not supported</h2>
+          <p>
+            This list is the product boundary, copied from what the extension
+            actually claims. If a capability is not listed as supported, assume
+            it is not.
+          </p>
+          <div class="split">
+            <div>
+              <h3>Supported</h3>
+              <ul class="tick">
+                <li>Videos hosted on X.</li>
+                <li>
+                  Animated GIFs that X stores as video files.
+                </li>
+                <li>
+                  Posts with several videos: each one is downloaded separately
+                  and located independently.
+                </li>
+                <li>
+                  Quote posts and reposts, attributed by media ID, preview image
+                  and post link — when that cannot be confirmed, the extension
+                  does not guess.
+                </li>
+                <li>
+                  Data already present in the page (GraphQL/SSR), then a limited
+                  media read as the video nears the viewport, then the owning
+                  post detail and X&rsquo;s own public embed endpoint as
+                  fallbacks, without infinite retries.
+                </li>
+                <li>
+                  Media you can already obtain, or normally could obtain, under
+                  your current access conditions.
+                </li>
+                <li>
+                  Keeping started tasks alive when you close or leave the source
+                  page; the background worker reconciles with offscreen tasks
+                  and Chrome download records after sleeping or restarting.
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3>Not supported</h3>
+              <ul class="cross">
+                <li>Live streaming recording, and Spaces.</li>
+                <li>External / non-X video sites.</li>
+                <li>Encrypted HLS and DRM content.</li>
+                <li>
+                  Bypassing login walls, protected accounts, regional blocks or
+                  any platform challenge.
+                </li>
+                <li>Fetching the original uploaded master file.</li>
+                <li>
+                  Resuming an interrupted HLS merge from an arbitrary segment
+                  after the whole browser exits — such tasks are retried.
+                </li>
+                <li>Lossy conversion such as MP3 output.</li>
+                <li>
+                  Any backend, account, API key, Python or FFmpeg dependency at
+                  runtime.
+                </li>
+              </ul>
+            </div>
+          </div>
+          <p>
+            A website can change its DOM, APIs and data structures at any time.
+            The extension is maintained against the site as it is; failures after
+            an X change need an update.
+          </p>
+        </section>
+
+        <section id="install">
+          <h2>How to install</h2>
+          <p>
+            Three installation paths, labelled by status. Requirements for all
+            of them: Chrome or Edge 116 or newer. No sign-in to the extension
+            exists, so nothing to log into and no cookie to copy.
+          </p>
+          <div class="grid">
+            <article class="card">
+              <span class="step">Path 1 · pending store approval</span>
+              <h3>Chrome Web Store</h3>
+              <p>
+                Once the listing is approved, this is the one-click route, and
+                updates arrive through the store.
+              </p>
+              <p>
+                <a
+                  class="btn btn-primary"
+                  href="https://chromewebstore.google.com/detail/x-video-downloader/pending"
+                  >Get X Video Downloader on the Chrome Web Store</a
+                >
+              </p>
+              <p class="note">
+                The listing URL is assigned by Google only after approval, so
+                <code>&hellip;/pending</code> is a placeholder and will not open
+                until the extension is published. Until then use Path&nbsp;3.
+              </p>
+            </article>
+
+            <article class="card">
+              <span class="step">Path 2 · pending store approval</span>
+              <h3>Microsoft Edge Add-ons</h3>
+              <p>
+                The same extension package is submitted to Microsoft Edge
+                Add-ons for Edge users.
+              </p>
+              <p>
+                <a
+                  class="btn btn-primary"
+                  href="https://microsoftedge.microsoft.com/addons"
+                  >Find X Video Downloader in Microsoft Edge Add-ons</a
+                >
+              </p>
+              <p class="note">
+                The Edge listing URL is assigned only after the Add-ons store
+                approves the submission; the link above currently goes to the
+                store home page. Until the listing is live, install from
+                Path&nbsp;3 and turn on
+                <code>edge://extensions</code> &rarr; Developer Mode.
+              </p>
+            </article>
+
+            <article class="card">
+              <span class="step">Path 3 · available now</span>
+              <h3>Manual: load unpacked from the GitHub release</h3>
+              <ol>
+                <li>
+                  Download
+                  <code>x-video-downloader-1.3.0.zip</code> from
+                  <a
+                    href="https://github.com/AuroraAeon/x-video-downloader/releases/latest"
+                    >the latest release</a
+                  >
+                  and unzip it. Checksums are published next to it in
+                  <code>SHA256SUMS.txt</code>.
+                </li>
+                <li>
+                  Open <code>chrome://extensions</code> and enable
+                  <em>Developer mode</em> in the top-right corner.
+                </li>
+                <li>
+                  Click <em>Load unpacked</em> and select the unzipped folder —
+                  the one that contains <code>manifest.json</code>.
+                </li>
+                <li>
+                  Reload any already-open X tab, keep your normal X session, and
+                  click the download icon on a video.
+                </li>
+              </ol>
+              <p>
+                Keep the folder in place: it is the extension&rsquo;s install
+                directory. To update, unzip over the same folder, click the
+                refresh icon on the card in
+                <code>chrome://extensions</code>, confirm the version reads
+                <strong>1.3.0</strong>, then reload your X tabs. No re-login is
+                required. Re-using the same directory preserves the extension ID
+                and your local task records.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="permissions">
+          <h2>Permissions, and why</h2>
+          <div class="table-scroll">
+            <table>
+              <caption>
+                The manifest requests exactly these — nothing else, and no
+                <code>&lt;all_urls&gt;</code>.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Permission</th>
+                  <th scope="col">What it is used for</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>downloads</code></td>
+                  <td>
+                    Start, cancel and track downloads that the extension itself
+                    created.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>storage</code></td>
+                  <td>
+                    Local task state in your browser, capped at 60 finished
+                    records.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>offscreen</code></td>
+                  <td>
+                    Worker-based media processing and keeping the Blob URL alive
+                    until Chrome finishes the save.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>https://x.com/*</code></td>
+                  <td>
+                    The page button and media data collected from that same page.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>https://video.twimg.com/*</code></td>
+                  <td>Reading media manifests and audio/video data.</td>
+                </tr>
+                <tr>
+                  <td><code>https://cdn.syndication.twimg.com/*</code></td>
+                  <td>
+                    Public embed metadata fallback for videos in view.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            There is no <code>cookies</code> permission, no debugger permission,
+            no host-wide grant and no login bypass. Media requests never carry X
+            session authentication headers. Runtime code is bundled with the
+            extension: no remote scripts, no
+            <code>eval</code>, no remote module loading, no native messaging,
+            and no server of ours exists to talk to. Page messages only carry
+            media records and cannot start a download by themselves.
+          </p>
+        </section>
+
+        <section id="troubleshooting">
+          <h2>Troubleshooting</h2>
+          <dl>
+            <dt>No button on a video I can see</dt>
+            <dd>
+              Reload the X tab — content scripts only attach on load. After an
+              update or a manual re-install, reload the tab too. If the
+              extension folder was moved, load unpacked again from its new
+              location.
+            </dd>
+            <dt>The strip is stuck on &ldquo;checking&rdquo;</dt>
+            <dd>
+              Refresh the X page, or open the post on its own. Probes are
+              time-bounded and re-issued; if X is slow or refusing requests the
+              failure is reported instead of guessed at.
+            </dd>
+            <dt>It says quality is limited, or that it fell back</dt>
+            <dd>
+              Open the task popup: it names the actual quality obtained and the
+              reason. A failing top candidate falls back and keeps the warning;
+              results from possibly incomplete sources are marked as limited.
+              Cancel or retry from the same popup.
+            </dd>
+            <dt>X itself asks me to log in, or shows 403 or a rate limit</dt>
+            <dd>
+              Fix the page access first. The extension never bypasses login,
+              protection, region restrictions or platform challenges, and it
+              sends no X session credentials in media requests.
+            </dd>
+            <dt>A download failed with a 429, a disk error or an invalid address</dt>
+            <dd>
+              These stop the task rather than retrying in a loop. Free up disk
+              space (merging uses temporary files until Chrome finishes saving),
+              then retry. Rate limiting is X&rsquo;s, not ours.
+            </dd>
+            <dt>Audio option is greyed out</dt>
+            <dd>
+              That media genuinely has no audio track, and the extension says so
+              instead of offering a fake option.
+            </dd>
+            <dt>The browser was closed mid-merge</dt>
+            <dd>
+              Interrupted HLS merges need a retry after relaunch; arbitrary
+              segment-level resume is not promised.
+            </dd>
+            <dt>Nothing looks right after an X redesign</dt>
+            <dd>
+              X can change its DOM or APIs at any time. Check
+              <a
+                href="https://github.com/AuroraAeon/x-video-downloader/releases/latest"
+                >releases</a
+              >
+              for a newer build and file an issue with the post link if you are
+              current.
+            </dd>
+          </dl>
+        </section>
+
+        <section id="transparency">
+          <h2>Source and privacy transparency</h2>
+          <div class="grid">
+            <article class="card">
+              <h3>Read the code</h3>
+              <p>
+                Repository:
+                <a href="https://github.com/AuroraAeon/x-video-downloader"
+                  >AuroraAeon/x-video-downloader</a
+                >. Original code is MIT-licensed; third-party libraries keep
+                their own licenses.
+              </p>
+              <p>
+                Bundled third parties: acorn 8.15.0 (MIT, read-only syntax tree
+                parsing), lucide 0.468.0 (ISC, icons), mediabunny 1.56.2
+                (MPL-2.0, media parsing and lossless muxing, unmodified). Full
+                texts ship inside the package as
+                <code>dist/THIRD_PARTY_NOTICES.txt</code>.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Reproducible package</h3>
+              <p>
+                Releases ship a versioned ZIP plus
+                <code>SHA256SUMS.txt</code>. Repeated full builds produce the
+                same archive hash, entries are sorted with fixed timestamps, and
+                packaging writes to a temp directory before atomically
+                replacing <code>dist</code>.
+              </p>
+              <p>
+                A release check rejects stray files in the build, widened host
+                permissions and a removed content security policy, so what you
+                load unpacked matches the reviewed manifest.
+              </p>
+            </article>
+            <article class="card">
+              <h3>What leaves your machine</h3>
+              <p>
+                Only the requests needed to read the post and fetch the media you
+                asked for, from the three hosts above. Nothing is sent to us —
+                there is nowhere to send it: no analytics, no telemetry, no
+                crash reports, no backend.
+              </p>
+              <p>
+                See the
+                <a href="privacy.html">privacy policy</a> for the storage
+                details, the 60-record cap and how to clear local records.
+              </p>
+            </article>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p class="affiliation">
+          <strong>Disclaimer.</strong> X Video Downloader is an independent
+          project and is <strong>not affiliated with, endorsed by, or sponsored
+          by X Corp.</strong> &ldquo;X&rdquo; and the X logo are trademarks of
+          X Corp. and appear here in plain text only to describe compatibility;
+          no X or Twitter mark, logo or bird imagery is used on this site. You
+          are responsible for the content you download and must respect the
+          platform&rsquo;s terms and applicable copyright law.
+        </p>
+        <nav aria-label="Site links">
+          <a href="index.html">Home (English)</a>
+          <a href="zh.html">Home (简体中文)</a>
+          <a href="privacy.html">Privacy policy</a>
+          <a href="privacy-zh.html">隐私政策（简体中文）</a>
+          <a href="https://github.com/AuroraAeon/x-video-downloader">Source repository</a>
+          <a href="https://github.com/AuroraAeon/x-video-downloader/issues">Issues</a>
+        </nav>
+        <p>
+          Version 1.3.0 · effective 2026-09-24 · original code MIT, third-party
+          libraries under their own licenses.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -23,6 +23,44 @@ assert.deepEqual([...manifest.host_permissions].sort(), [
 assert.equal(manifest.content_security_policy.extension_pages, "script-src 'self'; object-src 'none'; worker-src 'self'; connect-src 'self' https://video.twimg.com https://cdn.syndication.twimg.com");
 assert.equal(manifest.web_accessible_resources, undefined);
 assert.equal(manifest.minimum_chrome_version, "116");
+
+// Hosted stores read locale metadata out of the package, so a missing or
+// half-translated catalogue must fail the gate rather than the reviewer.
+assert.equal(manifest.default_locale, "en");
+assert.equal(manifest.name, "__MSG_extensionName__");
+assert.equal(manifest.description, "__MSG_extensionDescription__");
+assert.ok(manifest.description.length <= 132, "Store description exceeds 132 characters");
+const locales = {};
+for (const locale of ["en", "zh_CN"]) {
+  const key = `_locales/${locale}/messages.json`;
+  assert.ok(files[key], `${key} is missing from the archive`);
+  locales[locale] = JSON.parse(Buffer.from(files[key]).toString());
+}
+assert.deepEqual(
+  Object.keys(locales.en).sort(),
+  Object.keys(locales.zh_CN).sort(),
+  "Locale catalogues do not cover the same message keys",
+);
+for (const [key, entry] of Object.entries(locales.en)) {
+  assert.ok(entry.message.trim(), `${key} has an empty English message`);
+  assert.ok(locales.zh_CN[key].message.trim(), `${key} has an empty Chinese message`);
+}
+for (const [locale, catalog] of Object.entries(locales))
+  for (const [key, entry] of Object.entries(catalog)) {
+    // Undeclared substitutions make chrome.i18n.getMessage mangle the text.
+    assert.ok(!/\$\d/.test(entry.message), `${locale} ${key} uses an undeclared substitution`);
+    assert.deepEqual(
+      Object.keys(entry.placeholders ?? {}).sort(),
+      [...entry.message.matchAll(/\$([A-Za-z0-9_]+)/g)].map((m) => m[1]).sort(),
+      `${locale} ${key} placeholders do not match its message`,
+    );
+  }
+for (const match of JSON.stringify(manifest).matchAll(/__MSG_([\w.]+)__/g))
+  for (const locale of Object.keys(locales))
+    assert.ok(
+      locales[locale][match[1]],
+      `manifest references ${match[1]} but ${locale} has no such message`,
+    );
 for (const key of [
   "manifest_version",
   "version",
@@ -46,6 +84,8 @@ const expected = [
   "offscreen.js",
   "media-worker.js",
   "popup.js",
+  "_locales/en/messages.json",
+  "_locales/zh_CN/messages.json",
   "LICENSE",
   "THIRD_PARTY_NOTICES.txt",
   "INSTALL.txt",
