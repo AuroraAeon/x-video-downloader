@@ -26,6 +26,16 @@
 - 两道断言都实测会拒：向 `dist/manifest.json` 注入 CRLF（1,166 → 1,208 字节）后只重打包，门禁以 `Carriage return in manifest.json: the package is not reproducible across platforms` 退出 1；把 `scripts/package.mjs` 的时间常量退回 `Date.UTC(1980, 0, 1)` 后，`TZ=Pacific/Kiritimati` 与 `TZ=Asia/Shanghai` 下的重打包都以 `Nonzero DOS time in INSTALL.txt` 退出 1（`TZ=UTC` 下仍通过——那里本地零点与 UTC 零点同一，字节本来就与 CI 相同，属该断言的诚实边界）。还原后重建重打包回到 `b23e23ec…`，且修复后的常量在 UTC / +14 / -5 三个时区都通过门禁。
 - 一次负向测试自身的方法错误（记录以免把"没测到"当成"测过了"）：最初用 `pnpm package` 复现注入，而该脚本是 `pnpm build && node scripts/package.mjs`，构建先把注入覆盖掉，门禁"通过"其实什么都没校验。改成注入后只跑 `node scripts/package.mjs`，才被拒。
 
+### 已发布产物本身可安装
+
+商店审核方与用户拿到的是 GitHub Release 里的那个 ZIP，不是本机的 `dist`，因此浏览器套件改为直接跑在已发布产物上（`scripts/e2e.mjs` 与 `scripts/layout-test.mjs` 新增 `XVD_EXTENSION` 覆盖，沿用 `live.mjs`/`performance.mjs` 已有约定）：
+
+- `gh release download v1.3.0` 取回 `x-video-downloader-1.3.0.zip`，SHA-256 与 `release/SHA256SUMS.txt` 记的规范哈希 `b23e23ec…` 完全相同——可复现性主张由此在 GitHub 的分发链路上被复核了一次。
+- 解压出 19 个文件，与本机 `dist` 逐文件比对：18 个完全一致，唯一差异是多出 `INSTALL.txt`（打包时才生成，本就不在 `dist`）。
+- `XVD_EXTENSION=output/published-dist pnpm test:e2e` 全部通过、`"errors": []`；`pnpm test:layout` 同样通过 9 项，含 `locale-zh-CN` 中文界面场景。即首次安装者按 `INSTALL.txt` 选的目录（含 `manifest.json` 的解压根）确实可用。
+- 这个开关本身做了反向对照：`XVD_EXTENSION=output/no-such-build pnpm test:layout` 以退出码 1 失败，说明套件真的在用该路径，而不是"设了没生效、实际仍测 `dist`"的假绿。
+- 复现命令：`pnpm build && pnpm package && pnpm exec node scripts/check-package.mjs` 之后，`XVD_EXTENSION=<解压目录> pnpm test:e2e && XVD_EXTENSION=<解压目录> pnpm test:layout`。
+
 ### 假设否证
 
 - 本轮曾把故障归因为"未声明 `placeholders` 会让 Chrome 拒绝加载整个扩展"。**该结论不成立**，已实测否证：复制同一份 `dist` 五份，分别注入清单引用消息（`extensionDescription`）与运行时消息（`labelUnavailable`）的 `$1` 和 `$NOTHING` 形态，Chrome for Testing 每次都照常注册后台 service worker（`chrome-extension://<id>/background.js`）。
@@ -44,7 +54,7 @@
 - 两处 `gh` 参数写法在本机 gh 2.95.0 上实测纠正：topic 参数是 `--add-topic`（可逗号并列），`--repository-topic` 会打印用法并失败；开启 Discussions 是 `--enable-discussions`，不存在 `--add-discussions`。`docs/distribution.md` 第 0、4 节已按读回结果改写。同类：`gh api /repos/…` 在本机 Git Bash 下会被 MSYS 改写成 `C:/Program Files/Git/repos/…`，必须去掉前导斜杠。
 - 推送 `132dd2d`（复现性修复）后 `Extension Checks` 为 success，即新增的 CR 与 ZIP 时间戳断言在 Linux/CI 上也通过。
 - 经所有者授权用 API 启用 Pages（`gh api --method POST repos/AuroraAeon/x-video-downloader/pages -f build_type=workflow`，返回 `build_type: workflow`；随后 `GET …/pages` 显示站点记录存在、`https_enforced: true`，仓库 `has_pages: true`），没有为工作流存任何新 token。之后 `Deploy public site` 两次运行 success，deployment `6631151324`/`6631184960` 的状态链为 waiting → queued → in_progress → **success**（`/deployments/{id}/statuses`）。
-- 但站点**尚未对外服务**，这一点单独实测：06:08 UTC 首页、`privacy.html`、`privacy-zh.html`、`zh.html`、`sitemap.xml`、`robots.txt` 全部 404。为排除本机网络与 CDN 负缓存做了三组对照：同机访问 `cli.github.com` 得 200；`--noproxy '*'` 直连仍是 404；此前从未被请求过的 `assets/marquee-en.png` 等新路径立即返回 404（`Age: 1`、`X-Cache: HIT`），而首页那次 404 的 `Age: 3000` 说明它确实是启用前那次探测留下的负缓存。`/pages/builds/latest` 与 `/pages/deployments` 返回 404 属正常（那是分支构建型 Pages 的端点，workflow 构建没有 build 记录）。结论：deployment 成功不等于路由生效，记录为"已启用、已部署、暂未服务"，不改写成"已上线"。
+- 但站点**尚未对外服务**，这一点单独实测：06:08 UTC 首页、`privacy.html`、`privacy-zh.html`、`zh.html`、`sitemap.xml`、`robots.txt` 全部 404。为排除本机网络与 CDN 负缓存做了三组对照：同机访问 `cli.github.com` 得 200；`--noproxy '*'` 直连仍是 404；此前从未被请求过的 `assets/marquee-en.png` 等新路径立即返回 404（`Age: 1`、`X-Cache: HIT`），而首页那次 404 的 `Age: 3000` 说明它确实是启用前那次探测留下的负缓存。再比对响应正文定性：本站所有路径返回的与"该账号下并不存在的仓库"是同一张 GitHub Pages **"Site not found"** 模板（9,115 字节），而**已注册路由**的 Pages 站在缺路径时返回站点自己的 404（对照 `cli.github.com/no-such-page-xyz` 的 15,328 字节 Jekyll 模板）——所以既不是网络也不是缓存，是边缘上没有这条站点路由。`/pages/builds/latest` 与 `/pages/deployments` 返回 404 属正常（那是分支构建型 Pages 的端点，workflow 构建没有 build 记录）。结论：deployment 成功不等于路由生效，记录为"已启用、已部署、暂未服务"，不改写成"已上线"。
 
 ### 商店素材
 

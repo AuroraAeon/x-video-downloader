@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 
 const out = path.resolve("output/playwright");
+const extension = path.resolve(process.env.XVD_EXTENSION ?? "dist");
 await mkdir(out, { recursive: true });
 const context = await chromium.launchPersistentContext("", {
   channel: process.env.XVD_CHROME ? undefined : "chromium",
@@ -11,8 +12,8 @@ const context = await chromium.launchPersistentContext("", {
   headless: true,
   locale: "en-US",
   args: [
-    `--disable-extensions-except=${path.resolve("dist")}`,
-    `--load-extension=${path.resolve("dist")}`,
+    `--disable-extensions-except=${extension}`,
+    `--load-extension=${extension}`,
   ],
 });
 const results = [];
@@ -147,8 +148,8 @@ try {
     headless: true,
     locale: "zh-CN",
     args: [
-      `--disable-extensions-except=${path.resolve("dist")}`,
-      `--load-extension=${path.resolve("dist")}`,
+      `--disable-extensions-except=${extension}`,
+      `--load-extension=${extension}`,
     ],
   });
   try {

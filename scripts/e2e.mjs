@@ -26,7 +26,7 @@ const hasCopyInAnyLocale = (text, key) =>
   copyInAnyLocale(key).some((prefix) => prefix && text.includes(prefix));
 const out = path.resolve("output/playwright");
 await mkdir(out, { recursive: true });
-const extension = path.resolve("dist");
+const extension = path.resolve(process.env.XVD_EXTENSION ?? "dist");
 const results = [],
   errors = [];
 const counts = new Map();

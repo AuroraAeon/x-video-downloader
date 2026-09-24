@@ -24,6 +24,15 @@ browser profile, so they are not part of CI and their output is not required in 
 PR. Run them locally when a change touches media inspection, and never commit the
 recordings, profiles or downloaded files they produce.
 
+On release day the artifact reviewers actually install is the published ZIP, not
+`dist`, so re-run the browser suites against its contents: unzip
+`release/x-video-downloader-<version>.zip` (verify it against
+`release/SHA256SUMS.txt` first) and point both suites at that directory with
+`XVD_EXTENSION=<unzipped dir> pnpm test:e2e` and then
+`XVD_EXTENSION=<unzipped dir> pnpm test:layout`. Running the two browser suites
+at the same time has been observed to abort them (exit 13) without a failing
+assertion, so run one, wait, then run the other.
+
 ## Invariants a change must keep
 
 These are the reasons features get rejected, not style preferences:
