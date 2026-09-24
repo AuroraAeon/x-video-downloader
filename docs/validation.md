@@ -41,7 +41,10 @@
 - 推送后对**真实外部状态**做了一次读回（2026-09-24，`gh run list` / `gh release view` / `gh repo view`，不是本地推断）：`Extension Checks` 在 `main`（提交 `edcd0aa`）为 success；`Release` 工作流对 `v1.3.0` 为 success，`gh release view v1.3.0` 显示非草稿、附件 `x-video-downloader-1.3.0.zip` 与 `SHA256SUMS.txt` 都在；仓库 `homepageUrl` 指向站点、八个 topic 全部读回；`hasDiscussionsEnabled` 仍为 false。GH 上的 zip 与本机四种时区重打包同哈希，即 CI 与本地构建一致。
 - 同一次 push 的 `Deploy public site` 为 failure，报 `Get Pages site failed … Error: Not Found`：Pages 未为该仓库启用，站点构建本身成功。这是所有者一次开关的事（Settings → Pages → Source: GitHub Actions），不是代码缺陷；启用前 `https://auroraeon.github.io/x-video-downloader/`、`/privacy.html`、`/sitemap.xml` 实测均 404，因此商店表单仍无法填写隐私政策 URL。
 - `actions/configure-pages@v5` 的 `enablement` 输入**不是**免凭证的替代路径：上游 `action.yml` 明写"需要提供 `GITHUB_TOKEN` 以外的 token"（PAT 需 `repo` 或 Pages 写权限，GitHub App 需 `administration:write` + `pages:write`）。给工作流存一个长期 PAT 换来的只是省下一次后台点击，却多了一个凭证，因此本仓库不走这条路，仍按所有者手工启用。
-- 两处 `gh` 参数写法在本机 gh 2.95.0 上实测纠正：topic 参数是 `--add-topic`（可逗号并列），`--repository-topic` 会打印用法并失败；开启 Discussions 是 `--enable-discussions`，不存在 `--add-discussions`。`docs/distribution.md` 第 0、4 节已按读回结果改写。
+- 两处 `gh` 参数写法在本机 gh 2.95.0 上实测纠正：topic 参数是 `--add-topic`（可逗号并列），`--repository-topic` 会打印用法并失败；开启 Discussions 是 `--enable-discussions`，不存在 `--add-discussions`。`docs/distribution.md` 第 0、4 节已按读回结果改写。同类：`gh api /repos/…` 在本机 Git Bash 下会被 MSYS 改写成 `C:/Program Files/Git/repos/…`，必须去掉前导斜杠。
+- 推送 `132dd2d`（复现性修复）后 `Extension Checks` 为 success，即新增的 CR 与 ZIP 时间戳断言在 Linux/CI 上也通过。
+- 经所有者授权用 API 启用 Pages（`gh api --method POST repos/AuroraAeon/x-video-downloader/pages -f build_type=workflow`，返回 `build_type: workflow`；随后 `GET …/pages` 显示站点记录存在、`https_enforced: true`，仓库 `has_pages: true`），没有为工作流存任何新 token。之后 `Deploy public site` 两次运行 success，deployment `6631151324`/`6631184960` 的状态链为 waiting → queued → in_progress → **success**（`/deployments/{id}/statuses`）。
+- 但站点**尚未对外服务**，这一点单独实测：06:08 UTC 首页、`privacy.html`、`privacy-zh.html`、`zh.html`、`sitemap.xml`、`robots.txt` 全部 404。为排除本机网络与 CDN 负缓存做了三组对照：同机访问 `cli.github.com` 得 200；`--noproxy '*'` 直连仍是 404；此前从未被请求过的 `assets/marquee-en.png` 等新路径立即返回 404（`Age: 1`、`X-Cache: HIT`），而首页那次 404 的 `Age: 3000` 说明它确实是启用前那次探测留下的负缓存。`/pages/builds/latest` 与 `/pages/deployments` 返回 404 属正常（那是分支构建型 Pages 的端点，workflow 构建没有 build 记录）。结论：deployment 成功不等于路由生效，记录为"已启用、已部署、暂未服务"，不改写成"已上线"。
 
 ### 商店素材
 
@@ -82,7 +85,7 @@
 ### 本轮未实测
 
 - 没有向 Chrome Web Store 或 Edge Add-ons 提交任何内容：注册、条目创建、素材上传和最终提交按钮都属于账号所有者的手工步骤，见 `docs/distribution.md` 第 4 节。
-- GitHub Pages 尚未启用，`docs/site` 与双语隐私政策目前只是仓库内文件；商店表单要求一个公开可访问的隐私政策 URL，因此上架前必须先开启。
+- GitHub Pages 已启用且两次部署都报 success，但截至 2026-09-24 06:08 UTC 站点 URL 实测仍 404（见"发布链路"一节的三组对照），因此 `docs/site` 与双语隐私政策在外部看来仍只是仓库内文件；商店表单要求一个公开可访问的隐私政策 URL，所以真正返回 200 之前无法提交。Search Console 验证与 sitemap 提交同样只能等这一步生效。
 - 素材已生成但未上传到任何商店表单，也没有人工确认过商店审核方是否接受"渲染本机测试样例"的截图；如需以真实 X 页面截图提交，需要账号所有者用自己的登录态另行截取，本机样例是为了不把个人时间线送进仓库和商店素材。
 - 真实 X 页面的 `test:live`、`test:live-hls`、`test:source` 未运行，原因与 1.2.1 相同：需要外网与真实登录态，不能用本机样例代替。
 
