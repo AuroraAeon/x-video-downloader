@@ -3,6 +3,7 @@ import {
   cp,
   mkdir,
   readFile,
+  readdir,
   rename,
   rm,
   writeFile,
@@ -18,6 +19,19 @@ if (metadata.version !== manifest.version)
 const out = "dist.build";
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
+const isText = (name) =>
+  /\.(json|html|css|js|txt|svg)$/i.test(name) || name === "LICENSE";
+const normalizeEol = async (dir) => {
+  for (const item of await readdir(dir, { withFileTypes: true })) {
+    const path = `${dir}/${item.name}`;
+    if (item.isDirectory()) await normalizeEol(path);
+    else if (isText(item.name)) {
+      const text = await readFile(path, "utf8");
+      const lf = text.replace(/\r\n?/g, "\n");
+      if (lf !== text) await writeFile(path, lf);
+    }
+  }
+};
 await cp("public", out, { recursive: true });
 await cp("LICENSE", `${out}/LICENSE`);
 for (const name of [
@@ -65,6 +79,10 @@ for (const name of Object.keys(metadata.dependencies).sort()) {
   notices += `${body}\n\n`;
 }
 await writeFile(`${out}/THIRD_PARTY_NOTICES.txt`, notices);
+// A Windows checkout with core.autocrlf hands this step CRLF text files. Chrome
+// does not care, but a release hash that moves with the developer's operating
+// system is not reproducible, so every text entry is normalised to LF.
+await normalizeEol(out);
 await rm("dist", { recursive: true, force: true });
 await rename(out, "dist");
 console.log("Built dist/ (Manifest V3, all runtime code bundled locally).");

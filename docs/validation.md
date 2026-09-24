@@ -12,9 +12,19 @@
 
 ### 打包与可复现
 
-- `pnpm exec node scripts/check-package.mjs` 通过：`release/x-video-downloader-1.3.0.zip` 含 19 个文件、237,338 字节、SHA-256 `ee4f84b0c018dd975a66d293c0af3517027a6463f4d59f0a235b2eddc70374be`。归档内确认存在 `_locales/en/messages.json`（9,227 字节）与 `_locales/zh_CN/messages.json`（8,789 字节），清单 1,208 字节通过 `__MSG_` 引用两者。
-- 同一份源码连续三次 `pnpm build` + `pnpm package` 得到同一 SHA-256，确认可复现。
+- `pnpm exec node scripts/check-package.mjs` 通过：`release/x-video-downloader-1.3.0.zip` 含 19 个文件、237,330 字节、SHA-256 `b23e23ecfe3e3d4e72270d2ec31c625e07a972f6e3211663d9a8602a73ba2469`。归档内确认存在 `_locales/en/messages.json`（9,227 字节）与 `_locales/zh_CN/messages.json`（8,789 字节），清单 1,166 字节通过 `__MSG_` 引用两者。
+- 同一份源码连续三次 `pnpm build` + `pnpm package` 得到同一 SHA-256；再以 `TZ=UTC`、`America/New_York`、`Asia/Kolkata`、`Pacific/Kiritimati` 四种时区各重打包一次，四次的 SHA-256 与 CI 发布到 GitHub Release 的附件完全相同（`b23e23ec…`），确认可复现且不随开发机时区漂移。
+- **两条真实的跨机可复现缺陷**由这次对比暴露并修好（此前"任何机器都能重算出同一哈希"的说法过强）：
+  - `public/manifest.json` 在 Windows 检出时带 CRLF（`core.autocrlf`），而构建原样复制 `public/`，使本机构建比 CI 多 42 字节。`scripts/build.mjs` 现在把复制出来的文本项（json/html/css/js/txt/svg/LICENSE）统一成 LF；修复后本机与 CI 归档的 19 个条目逐字节全部一致。
+  - `zipSync` 用**本地**时间字段写 DOS 时间戳，因此 `Date.UTC(1980, 0, 1)` 在 UTC+8 的开发机上写成 08:00、CI 写成 00:00，条目相同而容器哈希不同。`scripts/package.mjs` 改为本地零点常量，四个时区实测同一哈希。
+  - 一次方法错误带来的假警报，记录以免照抄：先用 shell 循环 `git cat-file blob | grep $'\r'` 扫全仓库，报出 10+ 个"blob 含 CRLF"的文件，包括工作流与 AGENTS.md。改用 Node 逐字节扫（`git ls-files -z` + `Buffer.includes(13)`）后，真实结果只有 8 个 blob 含 `0x0d`，全部是 `docs/site/assets/*.png`——PNG 二进制里本来就有这个字节，不是行结束符。仓库的 91 个受版本控制文件里**所有文本 blob 都是 LF**，含 CR 的只是本机工作副本（`core.autocrlf=true` 在检出时转换，本机 `public/manifest.json` 1,208 字节带 CR，而 `public/_locales/en/messages.json` 9,227 字节不带，因为后者被工具重写过）。因此不需要 `.gitattributes` 与全库 renormalize 提交，构建端的 LF 归一已经覆盖这条路径。
+- 影响范围说明：v1.3.0 的 GitHub Release 附件由 CI 产出，就是规范哈希 `b23e23ec…`；本轮早前记录的 `ee4f84b0…` 是修复前 Windows 本机构建的产物，已作废并在提交历史中保留为历史事实。
 - 负向门禁实测退出码 1：向 `en` 目录注入未声明的替换实参并重新打包后，门禁报 `en errHttpStatus uses an undeclared substitution`。还原源码并重建后哈希回到与注入前一致的值。
+- 上述两条缺陷各配了一道常驻回归门禁，都装在 `scripts/check-package.mjs` 里：
+  - 归档内任何文本条目（json/html/css/js/txt/svg/LICENSE）不得出现 `0x0d` 字节，因为一次 CRLF 泄漏就足以让发布哈希随操作系统漂移。
+  - 逐个解析本地文件头，断言 19 个条目的 DOS 时间字段为 0、日期字段为 1980-01-01（月是 1 基，编码 `(年-1980)<<9 | 月<<5 | 日` = 33），从而把"容器时间戳不随构建机时区漂移"变成机器检查，而不是一次手工流程。
+- 两道断言都实测会拒：向 `dist/manifest.json` 注入 CRLF（1,166 → 1,208 字节）后只重打包，门禁以 `Carriage return in manifest.json: the package is not reproducible across platforms` 退出 1；把 `scripts/package.mjs` 的时间常量退回 `Date.UTC(1980, 0, 1)` 后，`TZ=Pacific/Kiritimati` 与 `TZ=Asia/Shanghai` 下的重打包都以 `Nonzero DOS time in INSTALL.txt` 退出 1（`TZ=UTC` 下仍通过——那里本地零点与 UTC 零点同一，字节本来就与 CI 相同，属该断言的诚实边界）。还原后重建重打包回到 `b23e23ec…`，且修复后的常量在 UTC / +14 / -5 三个时区都通过门禁。
+- 一次负向测试自身的方法错误（记录以免把"没测到"当成"测过了"）：最初用 `pnpm package` 复现注入，而该脚本是 `pnpm build && node scripts/package.mjs`，构建先把注入覆盖掉，门禁"通过"其实什么都没校验。改成注入后只跑 `node scripts/package.mjs`，才被拒。
 
 ### 假设否证
 
@@ -28,6 +38,10 @@
 - `scripts/store-publish.mjs`：`--help` 与 `release`、`webstore-upload`、`webstore-publish`、`webstore-list`、`edge-package` 全部在缺少凭据时自动 dry-run，打印完整计划调用（密钥与未设置项 redacted）并以 0 退出，未发出任何网络请求；上传类命令先按 `release/SHA256SUMS.txt` 校验归档哈希与版本。
 - 修复该脚本一处真实缺陷：发布说明未提及当前版本时，`die()` 抛出的错误被"文件不存在"的分支吞掉，命令静默改用生成文案。现在读取与校验分离，缺文件走 fallback，内容不符则失败退出。
 - `ci.yml`、`pages.yml`、`release.yml` 三个工作流均通过 YAML 解析；`release.yml` 的 `verify` 作业与 `ci.yml` 步骤逐条一致，商店作业由 `environment: chrome-webstore`、fork 判定和凭据存在性输出三重门控，未配置凭据时只做 dry-run，发布目标为空则停在草稿不发布。
+- 推送后对**真实外部状态**做了一次读回（2026-09-24，`gh run list` / `gh release view` / `gh repo view`，不是本地推断）：`Extension Checks` 在 `main`（提交 `edcd0aa`）为 success；`Release` 工作流对 `v1.3.0` 为 success，`gh release view v1.3.0` 显示非草稿、附件 `x-video-downloader-1.3.0.zip` 与 `SHA256SUMS.txt` 都在；仓库 `homepageUrl` 指向站点、八个 topic 全部读回；`hasDiscussionsEnabled` 仍为 false。GH 上的 zip 与本机四种时区重打包同哈希，即 CI 与本地构建一致。
+- 同一次 push 的 `Deploy public site` 为 failure，报 `Get Pages site failed … Error: Not Found`：Pages 未为该仓库启用，站点构建本身成功。这是所有者一次开关的事（Settings → Pages → Source: GitHub Actions），不是代码缺陷；启用前 `https://auroraeon.github.io/x-video-downloader/`、`/privacy.html`、`/sitemap.xml` 实测均 404，因此商店表单仍无法填写隐私政策 URL。
+- `actions/configure-pages@v5` 的 `enablement` 输入**不是**免凭证的替代路径：上游 `action.yml` 明写"需要提供 `GITHUB_TOKEN` 以外的 token"（PAT 需 `repo` 或 Pages 写权限，GitHub App 需 `administration:write` + `pages:write`）。给工作流存一个长期 PAT 换来的只是省下一次后台点击，却多了一个凭证，因此本仓库不走这条路，仍按所有者手工启用。
+- 两处 `gh` 参数写法在本机 gh 2.95.0 上实测纠正：topic 参数是 `--add-topic`（可逗号并列），`--repository-topic` 会打印用法并失败；开启 Discussions 是 `--enable-discussions`，不存在 `--add-discussions`。`docs/distribution.md` 第 0、4 节已按读回结果改写。
 
 ### 商店素材
 
@@ -62,7 +76,7 @@
   - `README.md` 原本写"商店版本审核中"，而 `docs/distribution.md` 第 0 节记录的是"待提交"——从未向任何商店提交过，这句话描述了一个不存在的外部状态，对审核方和用户都是误导。改为"商店尚未上架……注册与提交步骤见 docs/stores.md"，并加入"首页不得出现审核中/已上架"的门禁与对应注入场景。`docs/distribution.md` 里的公告草稿有同一处错误（"目前商店审核中"），一并改为"商店条目尚未提交"。
   - 英文 bug 表单原本让报告者去读 README 里的 "what is not supported" 清单，但 README 只有中文 `行为与边界` 一节，英文页面上不存在该标题。改为指名实际章节（`README.md` 的 `行为与边界`）。
 - 一处**最初写成、后来被否证**的假门禁，记录以免重犯：确认项用例最初只比较全文 `required: true` 次数与 `validations:` 次数（`8 >= 6` 恒成立），删掉某个复选项的 `required: true` 仍然通过（`7 >= 6`）。改为按缩进分别统计复选项数与其 `required: true` 数、要求两者相等之后，该注入才被拒。
-- 外部现状改为实测而非推测（2026-09-24）：`gh repo view` 显示仓库存在、描述已是英文，但 `repositoryTopics` 与 `homepageUrl` 均未设置、Discussions 关闭；直接请求 `https://auroraeon.github.io/x-video-downloader/`、`/privacy.html`、`/sitemap.xml` 都返回 404，确认 Pages 尚未部署。`docs/distribution.md` 第 0 节新增"GitHub 仓库元数据"行，第 4 节按实测状态重写（并修正了原来的重复编号），附上设置 topics 与主页链接的 `gh repo edit` 命令。
+- 外部现状改为实测而非推测（2026-09-24）：`gh repo view` 显示仓库存在、描述已是英文，但 `repositoryTopics` 与 `homepageUrl` 均未设置、Discussions 关闭；直接请求 `https://auroraeon.github.io/x-video-downloader/`、`/privacy.html`、`/sitemap.xml` 都返回 404，确认 Pages 尚未部署。`docs/distribution.md` 第 0 节新增"GitHub 仓库元数据"行，第 4 节按实测状态重写（并修正了原来的重复编号），附上设置 topics 与主页链接的 `gh repo edit` 命令。同日经所有者授权执行该命令后再次读回：`homepageUrl` 已指向站点、八个 topic 全部到位、Discussions 仍关闭、描述 166 字符（GitHub 上限 350，商店的 132 字符上限只约束清单说明，由打包门禁保证）；distribution 第 0、4 节随即从"待所有者设置"改为"已完成"，Pages 三项 URL 仍实测 404，未改。
 - 三处**由自查发现并已修正的文案不准**：`README.md` 与 `docs/distribution.md` 草稿都把商店写成"审核中"（实际从未提交）；英文 bug 表单引用了 README 中不存在的英文小标题；`CHANGELOG.md`、`docs/validation.md` 与发布说明把 CONTRIBUTING 的不变量条数写成六条（实际七条，`grep -c '^- \*\*'` 核对）。前两类现在各有门禁，条数类属于一次性笔误，已逐处改正。
 
 ### 本轮未实测

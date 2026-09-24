@@ -126,8 +126,35 @@ assert.deepEqual(
   `Expected in the archive but not produced by the build: ${unbuilt.join(", ")}`,
 );
 
+const isText = (name) => /\.(json|html|css|js|txt|svg)$/i.test(name) || name === "LICENSE";
+
+// zipSync renders DOS timestamps from local time getters, so a UTC-anchored
+// mtime silently moves the published hash with the build machine's timezone.
+// Pin the container itself: every entry must carry local 1980-01-01 00:00.
+{
+  let off = 0;
+  let entries = 0;
+  while (off + 4 <= archive.length && archive.readUInt32LE(off) === 0x04034b50) {
+    const name = archive.subarray(off + 30, off + 30 + archive.readUInt16LE(off + 26)).toString();
+    assert.equal(archive.readUInt16LE(off + 10), 0, `Nonzero DOS time in ${name}`);
+    // DOS date: (year - 1980) << 9 | month << 5 | day, months are 1-based.
+    assert.equal(archive.readUInt16LE(off + 12), (1 << 5) | 1, `Timestamp in ${name} is not 1980-01-01`);
+    off += 30 + archive.readUInt16LE(off + 26) + archive.readUInt16LE(off + 28) + archive.readUInt32LE(off + 18);
+    entries++;
+  }
+  assert.equal(entries, Object.keys(files).length, "Archive entry headers did not parse");
+}
+
 for (const [name, bytes] of Object.entries(files)) {
   assert.ok(!name.endsWith(".map"), `Source map shipped: ${name}`);
+  if (isText(name)) {
+    // A CRLF in the archive means the build copied a Windows working tree
+    // verbatim, which moves the published checksum with the developer's OS.
+    assert.ok(
+      !Buffer.from(bytes).includes(0x0d),
+      `Carriage return in ${name}: the package is not reproducible across platforms`,
+    );
+  }
   if (name.endsWith(".js")) {
     const code = Buffer.from(bytes).toString();
     // `Function(...)` reaches the same constructor as `new Function(...)`.
