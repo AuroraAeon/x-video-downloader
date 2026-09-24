@@ -26,6 +26,13 @@ with 2FA, and a GitHub Pages site as the developer website. Chrome caps a
 developer account at 20 published extensions
 ([publish guide](https://developer.chrome.com/docs/webstore/publish)).
 
+Before typing either URL into a dashboard, confirm it actually serves today
+rather than trusting the repository state: `curl -s -o /dev/null -w
+'%{http_code}\n' https://auroraeon.github.io/x-video-downloader/privacy.html`
+must print 200. `docs/distribution.md` section 0 records the measured status of
+the site, and a deployment that CI reports as successful is not the same thing
+as a URL a reviewer can open.
+
 ## 2. Google OAuth for the Publishing API (one-time, ~20 minutes)
 
 Google documents the flow at
