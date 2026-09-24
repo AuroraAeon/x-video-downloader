@@ -68,7 +68,7 @@ export function createMediaFetch(
         if (/text\/html|application\/json/i.test(mime))
           throw new DownloadError("BAD_MEDIA", "媒体服务返回了非视频内容");
         if (new URL(url).pathname.endsWith(".m3u8")) {
-          const text = await boundedText(response, 1024 * 1024);
+          const text = await boundedText(response, 1024 * 1024, signal);
           clearTimeout(timer!);
           if (!text.trimStart().startsWith("#EXTM3U"))
             throw new DownloadError("BAD_PLAYLIST", "HLS 清单无效");

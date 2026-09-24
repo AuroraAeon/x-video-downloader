@@ -2,6 +2,28 @@
 
 日期：2026-09-15（Asia/Shanghai）。当前扩展版本 **1.2.0**。
 
+## 未发布修复验证（2026-09-24）
+
+### 修复前复现
+
+- 后台启动恢复阶段任一存储步骤被拒绝时，`ready` 变成永久失败的门闩：之后 `LIST`、`PROBE`、`START` 全部返回失败，直到 worker 重启。
+- 探测订阅计数只增不减且没有 `chrome.tabs.onRemoved` 回收：累计 100 个被放弃的探测后，所有内联画质检查长期返回“正在检查其他视频”，而下载仍正常。
+- 向 `dist` 添加多余文件、放宽 `host_permissions` 或删除内容安全策略后，旧的打包检查仍然报告 `valid: true`。
+
+### 修复后门禁
+
+- `tsc --noEmit` 通过；61 项单元测试通过（7 个文件），新增 6 项后台用例覆盖消息信任边界、伪造页面无法启动下载或清空队列、启动恢复、订阅按标签页关闭回收、订阅超时过期。恢复用例同时断言失败必须记录一次 `console.error`，即降级可见。
+- 26 项完整 MV3 浏览器业务场景通过，`errors` 为空；原有 8 项布局回归继续通过，信息栏仍在播放器外的正常文档流。
+- `pnpm exec node scripts/check-package.mjs` 通过：17 个文件、207,574 字节、SHA-256 `e9e7e07f32f3d653fe869f340f8034914e9648de8ecb242752c24d26d9aec7e9`。多轮完整 `build` + `package` 得到同一 SHA-256，压缩包与 `dist` 逐文件哈希一致，确认可复现。
+- 负向门禁本轮逐项实测，退出码均为 1：`dist` 中多余文件报 `dist/stray.js is missing from the archive`；只放宽源码 `manifest` 的 `host_permissions` 而不重建会被深度比对拒绝；重建后的产物内注入 `eval` 报 `Dynamic code evaluation in background.js`。实验后源码、`dist` 与 `release` 均已还原为同一哈希。
+- 浏览器语义实测：Chrome for Testing 153.0.8010.12（Playwright 1.63.0，chromium build 1243）中 `ReadableStreamDefaultReader.prototype.cancel` 存在；读取挂起时触发 abort，`boundedText` 立即以“响应读取已取消”结束，`finally` 中的 `releaseLock()` 不抛错且页面无未捕获异常；提前 abort 与超出字节上限同样不挂起。
+
+### 本轮未实测
+
+- 真实 X 页面的 `test:live`、`test:source` 和登录态时间线未运行，需要外网与真实账号；不能用本机集成测试代替。
+- 80ms 往返探测基准未重跑。本轮不改变候选采样、探测顺序或合并算法，因此没有新的性能结论；1.2.0 记录的性能数字仍是那一版的基准结果。
+- MAIN 世界读取的并发、期限与排队上限常量只在本地流式样例下验证，未对真实 X 时间线做背压压测。
+
 ## 1.2.0 验证
 
 - TypeScript 严格类型检查通过，55 项单元测试通过；新增 Range 边界、并发/取消、Worker 队列、会话缓存与长清单用例。

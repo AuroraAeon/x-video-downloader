@@ -1,5 +1,7 @@
 import {
   ACTIVE,
+  ALL_STATES,
+  WATCHER_TTL,
   errorText,
   jobKey,
   planKey,
@@ -21,20 +23,44 @@ import { SessionCache } from "./session-cache";
 const jobs = new Map<string, Job>();
 const cache = new SessionCache();
 const watchers = new Map<string, Map<number, number>>();
+const MAX_WATCHERS = 100;
 let creating: Promise<void> | undefined;
 let serial: Promise<unknown> = Promise.resolve();
+const stage = async (label: string, run: () => Promise<void>) => {
+  try {
+    await run();
+  } catch (e) {
+    // A rejected gate promise would fail every later handler for the whole
+    // worker lifetime, so each recovery step degrades on its own.
+    console.error(`[xvd] ${label}失败`, e);
+  }
+};
 const ready = (async () => {
-  await cache.restore();
-  await chrome.storage.local.setAccessLevel({
-    accessLevel: "TRUSTED_CONTEXTS",
+  await stage("会话缓存恢复", async () => {
+    await cache.restore();
   });
-  const data = await chrome.storage.local.get("jobs");
-  for (const job of Array.isArray(data.jobs) ? data.jobs : [])
-    if (job?.id && validateRecord(job.record)) {
-      job.mode ??= "video";
-      job.key = jobKey(job.record, job.mode);
-      jobs.set(job.id, job);
-    }
+  await stage("存储权限收紧", async () => {
+    await chrome.storage.local.setAccessLevel({
+      accessLevel: "TRUSTED_CONTEXTS",
+    });
+  });
+  await stage("历史任务恢复", async () => {
+    const data = await chrome.storage.local.get("jobs");
+    for (const job of Array.isArray(data.jobs) ? data.jobs : [])
+      if (job?.id && validateRecord(job.record)) {
+        job.mode ??= "video";
+        // A worker restart leaves no live owner, and states written by another
+        // version must not reach the popup or content label maps.
+        if (!ALL_STATES.includes(job.state)) {
+          job.state = "interrupted";
+          job.error ??= "浏览器或媒体处理环境已重启，请重试";
+        }
+        job.warnings ??= [];
+        job.progress = typeof job.progress === "number" ? job.progress : 0;
+        job.key = jobKey(job.record, job.mode);
+        jobs.set(job.id, job);
+      }
+  });
 })();
 const enqueue = <T>(fn: () => Promise<T>): Promise<T> => {
   const next = serial.then(() => ready).then(fn);
@@ -120,13 +146,35 @@ async function reconcile() {
       });
   }
 }
-function internal(sender: chrome.runtime.MessageSender, path: string) {
+/**
+ * Drop watcher records nobody will notify again. Without this the admission
+ * counter below only ever grew, so enough abandoned tabs permanently disabled
+ * inline quality for every later video in the worker's lifetime.
+ */
+export function pruneWatchers(
+  watchers: Map<string, Map<number, number>>,
+  tabId?: number,
+  now = Date.now(),
+): string[] {
+  const dropped: string[] = [];
+  for (const [key, tabs] of watchers) {
+    if (tabId !== undefined) tabs.delete(tabId);
+    for (const [id, seen] of tabs)
+      if (now - seen >= WATCHER_TTL) tabs.delete(id);
+    if (!tabs.size) {
+      watchers.delete(key);
+      dropped.push(key);
+    }
+  }
+  return dropped;
+}
+export function internal(sender: chrome.runtime.MessageSender, path: string) {
   return (
     sender.id === chrome.runtime.id &&
     sender.url === chrome.runtime.getURL(path)
   );
 }
-function content(sender: chrome.runtime.MessageSender) {
+export function content(sender: chrome.runtime.MessageSender) {
   try {
     return (
       sender.id === chrome.runtime.id &&
@@ -163,7 +211,7 @@ async function handle(
         (Array.isArray(m.tabIds) ? m.tabIds : []).filter(Number.isInteger),
       );
       for (const [tabId, time] of watchers.get(m.key) ?? [])
-        if (Date.now() - time < 120000) tabIds.add(tabId);
+        if (Date.now() - time < WATCHER_TTL) tabIds.add(tabId);
       for (const tabId of tabIds)
         void chrome.tabs
           .sendMessage(tabId, {
@@ -254,7 +302,8 @@ async function handle(
     const key = planKey(record),
       cached = cache.getQuality(key);
     if (cached) return { ok: true, quality: cached, key };
-    if (watchers.size >= 100 && !watchers.has(key))
+    pruneWatchers(watchers);
+    if (watchers.size >= MAX_WATCHERS && !watchers.has(key))
       return { ok: false, error: "正在检查其他视频" };
     const tabs = watchers.get(key) ?? new Map<number, number>();
     tabs.set(sender.tab!.id!, Date.now());
@@ -460,5 +509,16 @@ chrome.downloads.onChanged.addListener((delta) => {
 });
 chrome.runtime.onStartup.addListener(() => {
   void enqueue(reconcile).catch(() => {});
+});
+// A closed tab's content script dies with it and can never send CANCEL_PROBE,
+// so its inspection registrations have to be reclaimed from this side.
+chrome.tabs.onRemoved.addListener((tabId) => {
+  void enqueue(async () => {
+    const before = watchers.size;
+    pruneWatchers(watchers, tabId);
+    if (watchers.size === before) return;
+    if (!(await contexts()).length) return;
+    await offscreen({ type: "FORGET_TAB", tabId });
+  }).catch(() => {});
 });
 void enqueue(reconcile).catch(() => {});

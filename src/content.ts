@@ -8,6 +8,7 @@ import {
 import {
   CHANNEL,
   MAX_RECORDS,
+  PROBE_STALE,
   QUALITY_TTL,
   ACTIVE,
   errorText,
@@ -180,13 +181,24 @@ function stopProbe(p: Player) {
 function requestProbe(p: Player) {
   if (!p.visible || document.visibilityState === "hidden" || !p.record) return;
   const key = planKey(p.record);
+  if (p.probeKey === key && p.probePending) {
+    // A probe older than the queue's own worst case was dropped in flight; ask
+    // again instead of leaving the strip on "检测中" for the rest of the page.
+    if (Date.now() - (p.probeTime ?? 0) >= PROBE_STALE) {
+      p.probeTime = Date.now();
+      void send({
+        type: "PROBE",
+        record: p.record,
+        priority: p.priority,
+      }).catch(() => {});
+    }
+    return;
+  }
   if (
     p.probeKey === key &&
-    (p.probePending ||
-      (p.quality &&
-        !p.quality.pending &&
-        Date.now() - p.quality.checkedAt <
-          (p.quality.error ? 30000 : QUALITY_TTL)))
+    p.quality &&
+    !p.quality.pending &&
+    Date.now() - p.quality.checkedAt < (p.quality.error ? 30000 : QUALITY_TTL)
   )
     return;
   stopProbe(p);

@@ -24,14 +24,16 @@ const hlsWaiters: (() => void)[] = [];
 const send = (message: unknown) =>
   chrome.runtime.sendMessage({ target: "background", ...(message as object) });
 const probeTabs = new Map<string, Set<number>>();
-const probes = new ProbeQueue(
+const probes: ProbeQueue = new ProbeQueue(
   (key, quality, plan) => {
     const tabIds = [...(probeTabs.get(key) ?? [])];
     if (!quality.pending) probeTabs.delete(key);
     return send({ type: "QUALITY_RESULT", key, quality, tabIds, plan });
   },
   scheduleIdle,
-  () => running < 2,
+  // Two merges saturate the CPU, but never withhold every probe lane: a queue
+  // with no lane starves while long merges run.
+  () => running < 2 || probes.activeCount < 1,
 );
 async function update(task: Task, patch: Partial<Job>) {
   if (task.cancelled && patch.state !== "cancelled") return;
@@ -267,6 +269,18 @@ chrome.runtime.onMessage.addListener((m, sender, reply) => {
     if (!tabs?.size) {
       probeTabs.delete(m.key);
       probes.remove(m.key);
+    }
+    scheduleIdle();
+    reply({ ok: true });
+    return;
+  }
+  if (m.type === "FORGET_TAB") {
+    for (const [key, tabs] of [...probeTabs]) {
+      tabs.delete(m.tabId);
+      if (!tabs.size) {
+        probeTabs.delete(key);
+        probes.remove(key);
+      }
     }
     scheduleIdle();
     reply({ ok: true });
