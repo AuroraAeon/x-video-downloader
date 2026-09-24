@@ -55,6 +55,7 @@
 - 推送 `132dd2d`（复现性修复）后 `Extension Checks` 为 success，即新增的 CR 与 ZIP 时间戳断言在 Linux/CI 上也通过。
 - 经所有者授权用 API 启用 Pages（`gh api --method POST repos/AuroraAeon/x-video-downloader/pages -f build_type=workflow`，返回 `build_type: workflow`；随后 `GET …/pages` 显示站点记录存在、`https_enforced: true`，仓库 `has_pages: true`），没有为工作流存任何新 token。之后 `Deploy public site` 两次运行 success，deployment `6631151324`/`6631184960` 的状态链为 waiting → queued → in_progress → **success**（`/deployments/{id}/statuses`）。
 - 但站点**尚未对外服务**，这一点单独实测：06:08 UTC 首页、`privacy.html`、`privacy-zh.html`、`zh.html`、`sitemap.xml`、`robots.txt` 全部 404。为排除本机网络与 CDN 负缓存做了三组对照：同机访问 `cli.github.com` 得 200；`--noproxy '*'` 直连仍是 404；此前从未被请求过的 `assets/marquee-en.png` 等新路径立即返回 404（`Age: 1`、`X-Cache: HIT`），而首页那次 404 的 `Age: 3000` 说明它确实是启用前那次探测留下的负缓存。再比对响应正文定性：本站所有路径返回的与"该账号下并不存在的仓库"是同一张 GitHub Pages **"Site not found"** 模板（9,115 字节），而**已注册路由**的 Pages 站在缺路径时返回站点自己的 404（对照 `cli.github.com/no-such-page-xyz` 的 15,328 字节 Jekyll 模板）——所以既不是网络也不是缓存，是边缘上没有这条站点路由。`/pages/builds/latest` 与 `/pages/deployments` 返回 404 属正常（那是分支构建型 Pages 的端点，workflow 构建没有 build 记录）。结论：deployment 成功不等于路由生效，记录为"已启用、已部署、暂未服务"，不改写成"已上线"。
+- 为免后来者重复尝试：又做过 `PUT repos/…/pages`（`build_type=workflow`，返回空 204）并再 dispatch 一次部署，等待后仍是同一张 "Site not found" 模板；账号级原因（邮箱是否已验证、Pages 是否从未在后台打开过）无法从命令行确认——本机 `gh` 登录没有 `user` scope，`GET /user/emails` 直接 404，因此这一步只能由所有者在浏览器里看 <https://github.com/AuroraAeon/x-video-downloader/settings/pages> 与 <https://github.com/settings/pages>。
 
 ### 商店素材
 
