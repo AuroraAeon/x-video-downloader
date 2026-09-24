@@ -81,12 +81,15 @@ export function graphUrl(value: string): boolean {
 export async function boundedText(
   response: Response,
   limit = MAX_JSON,
+  signal?: AbortSignal,
 ): Promise<string> {
   const reader = response.body?.getReader();
   if (!reader) return "";
   const decoder = new TextDecoder();
   let size = 0,
     text = "";
+  const onAbort = () => void reader.cancel().catch(() => {});
+  signal?.addEventListener("abort", onAbort, { once: true });
   try {
     while (true) {
       const { value, done } = await reader.read();
@@ -95,11 +98,14 @@ export async function boundedText(
       if (size > limit) throw Error("响应过大，已停止解析");
       text += decoder.decode(value, { stream: true });
     }
+    // Cancelling a locked reader ends the read early instead of rejecting it.
+    if (signal?.aborted) throw Error("响应读取已取消");
     return text + decoder.decode();
   } catch (e) {
     void reader.cancel().catch(() => {});
     throw e;
   } finally {
+    signal?.removeEventListener("abort", onAbort);
     reader.releaseLock();
   }
 }

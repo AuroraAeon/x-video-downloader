@@ -37,6 +37,9 @@ export class ProbeQueue {
   get busy() {
     return this.active.size > 0 || this.queue.size > 0;
   }
+  get activeCount() {
+    return this.active.size;
+  }
   get(record: MediaRecord) {
     const value = this.cache.get(planKey(record));
     return value && Date.now() - value.time < PLAN_TTL

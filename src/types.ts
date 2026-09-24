@@ -85,11 +85,26 @@ export const ACTIVE = new Set<JobState>([
   "merging",
   "saving",
 ]);
+export const ALL_STATES: JobState[] = [
+  "queued",
+  "analyzing",
+  "waiting",
+  "merging",
+  "saving",
+  "complete",
+  "failed",
+  "cancelled",
+  "interrupted",
+];
 export const CHANNEL = "x-video-downloader/v1";
 export const MAX_JSON = 4 * 1024 * 1024;
 export const MAX_RECORDS = 500;
 export const QUALITY_TTL = 15 * 60 * 1000;
 export const PLAN_TTL = 2 * 60 * 1000;
+/** A watcher is only worth notifying while its inspection may still land. */
+export const WATCHER_TTL = 2 * 60 * 1000;
+/** A pending probe older than this was dropped, so the tab asks again. */
+export const PROBE_STALE = 45 * 1000;
 export const keyOf = (r: MediaRecord) => `${r.sourceTweetId}:${r.mediaId}`;
 export const jobKey = (r: MediaRecord, mode: DownloadMode) =>
   `${keyOf(r)}:${mode}`;
