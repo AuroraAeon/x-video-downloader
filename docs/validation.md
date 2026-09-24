@@ -1,8 +1,8 @@
 # 验证记录
 
-日期：2026-09-15（Asia/Shanghai）。当前扩展版本 **1.2.0**。
+日期：2026-09-24（Asia/Shanghai）。当前扩展版本 **1.2.1**。
 
-## 未发布修复验证（2026-09-24）
+## 1.2.1 验证
 
 ### 修复前复现
 
@@ -14,8 +14,8 @@
 
 - `tsc --noEmit` 通过；61 项单元测试通过（7 个文件），新增 6 项后台用例覆盖消息信任边界、伪造页面无法启动下载或清空队列、启动恢复、订阅按标签页关闭回收、订阅超时过期。恢复用例同时断言失败必须记录一次 `console.error`，即降级可见。
 - 26 项完整 MV3 浏览器业务场景通过，`errors` 为空；原有 8 项布局回归继续通过，信息栏仍在播放器外的正常文档流。
-- `pnpm exec node scripts/check-package.mjs` 通过：17 个文件、207,574 字节、SHA-256 `e9e7e07f32f3d653fe869f340f8034914e9648de8ecb242752c24d26d9aec7e9`。多轮完整 `build` + `package` 得到同一 SHA-256，压缩包与 `dist` 逐文件哈希一致，确认可复现。
-- 负向门禁本轮逐项实测，退出码均为 1：`dist` 中多余文件报 `dist/stray.js is missing from the archive`；只放宽源码 `manifest` 的 `host_permissions` 而不重建会被深度比对拒绝；重建后的产物内注入 `eval` 报 `Dynamic code evaluation in background.js`。实验后源码、`dist` 与 `release` 均已还原为同一哈希。
+- `pnpm exec node scripts/check-package.mjs` 通过：`release/x-video-downloader-1.2.1.zip` 含 17 个文件、207,572 字节、SHA-256 `94217b65a5bef8541713fdc0fee469dcc1748579f4e6d644e608ba55fd6b6d80`，与 `dist` 逐文件哈希一致。多轮完整 `build` + `package` 得到同一 SHA-256，确认可复现。
+- 负向门禁逐项实测，退出码均为 1：`dist` 中多余文件报 `dist/stray.js is missing from the archive`；只放宽源码 `manifest` 的 `host_permissions` 而不重建会被深度比对拒绝；重建后的产物内注入 `eval` 报 `Dynamic code evaluation in background.js`。实验后源码、`dist` 与 `release` 已还原，还原后重新构建得到与实验前一致的产物。
 - 浏览器语义实测：Chrome for Testing 153.0.8010.12（Playwright 1.63.0，chromium build 1243）中 `ReadableStreamDefaultReader.prototype.cancel` 存在；读取挂起时触发 abort，`boundedText` 立即以“响应读取已取消”结束，`finally` 中的 `releaseLock()` 不抛错且页面无未捕获异常；提前 abort 与超出字节上限同样不挂起。
 
 ### 本轮未实测
